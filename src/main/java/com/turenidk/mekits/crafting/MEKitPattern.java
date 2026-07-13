@@ -8,47 +8,100 @@ import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.component.KitContents;
 import com.turenidk.mekits.component.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-public final class TestKitPattern implements IPatternDetails {
+public final class MEKitPattern implements IPatternDetails {
     private final AEItemKey definition;
     private final IInput[] inputs;
     private final List<GenericStack> outputs;
 
-    public TestKitPattern(AEItemKey definition) {
+    public MEKitPattern(AEItemKey definition) {
         this.definition = definition;
 
-        this.inputs = new IInput[] {
-                new ExactInput(AEItemKey.of(Items.CHEST), 1),
-                new ExactInput(AEItemKey.of(Items.PISTON), 2),
-                new ExactInput(AEItemKey.of(Items.IRON_INGOT), 3)
-        };
+        ItemStack patternStack = definition.toStack();
 
-        ItemStack outputKit = MEKits.ME_KIT.get().getDefaultInstance();
+        String kitName = patternStack.get(
+                ModDataComponents.KIT_NAME.get()
+        );
+
+        KitContents kitContents = patternStack.get(
+                ModDataComponents.KIT_CONTENTS.get()
+        );
+
+        if (kitName == null || kitName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Encoded ME Kit Pattern has no kit name"
+            );
+        }
+
+        if (kitContents == null || kitContents.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Encoded ME Kit Pattern has no contents"
+            );
+        }
+
+        Map<AEItemKey, Long> condensedInputs =
+                new LinkedHashMap<>();
+
+        for (ItemStack containedStack : kitContents.stacks()) {
+            AEItemKey key = AEItemKey.of(containedStack);
+
+            if (key == null) {
+                throw new IllegalArgumentException(
+                        "ME Kit Pattern contains an invalid item stack"
+                );
+            }
+
+            condensedInputs.merge(
+                    key,
+                    (long) containedStack.getCount(),
+                    Long::sum
+            );
+        }
+
+        List<IInput> inputList = new ArrayList<>();
+
+        for (Map.Entry<AEItemKey, Long> entry :
+                condensedInputs.entrySet()) {
+            inputList.add(
+                    new ExactInput(
+                            entry.getKey(),
+                            entry.getValue()
+                    )
+            );
+        }
+
+        this.inputs = inputList.toArray(IInput[]::new);
+
+        ItemStack outputKit =
+                MEKits.ME_KIT.get().getDefaultInstance();
 
         outputKit.set(
                 ModDataComponents.KIT_NAME.get(),
-                "Test Kit"
+                kitName
         );
 
         outputKit.set(
                 ModDataComponents.KIT_CONTENTS.get(),
-                new KitContents(List.of(
-                        new ItemStack(Items.CHEST, 1),
-                        new ItemStack(Items.PISTON, 2),
-                        new ItemStack(Items.IRON_INGOT, 3)
-                ))
+                kitContents
         );
 
+        AEItemKey outputKey = AEItemKey.of(outputKit);
+
+        if (outputKey == null) {
+            throw new IllegalStateException(
+                    "Could not create the ME Kit output key"
+            );
+        }
+
         this.outputs = List.of(
-                new GenericStack(
-                        AEItemKey.of(outputKit),
-                        1
-                )
+                new GenericStack(outputKey, 1)
         );
     }
 
@@ -74,7 +127,7 @@ public final class TestKitPattern implements IPatternDetails {
 
     @Override
     public boolean equals(Object object) {
-        return object instanceof TestKitPattern other
+        return object instanceof MEKitPattern other
                 && definition.equals(other.definition);
     }
 

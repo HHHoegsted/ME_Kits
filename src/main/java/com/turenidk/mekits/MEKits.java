@@ -5,6 +5,7 @@ import com.turenidk.mekits.block.MEKitPackagerBlock;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
 import com.turenidk.mekits.component.ModDataComponents;
 import com.turenidk.mekits.item.MEKitItem;
+import com.turenidk.mekits.crafting.MEKitPattern;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -24,7 +25,12 @@ import org.slf4j.Logger;
 import appeng.api.AECapabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import appeng.api.crafting.PatternDetailsHelper;
-import com.turenidk.mekits.crafting.TestKitPattern;
+
+import com.turenidk.mekits.component.KitContents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import java.util.List;
 
 
 @Mod(MEKits.MODID)
@@ -59,7 +65,7 @@ public class MEKits {
             ITEMS.register(
                     "encoded_me_kit_pattern",
                     () -> PatternDetailsHelper
-                            .encodedPatternItemBuilder(TestKitPattern::new)
+                            .encodedPatternItemBuilder(MEKitPattern::new)
                             .build()
             );
 
@@ -98,7 +104,26 @@ public class MEKits {
                             .icon(() -> ME_KIT.get().getDefaultInstance())
                             .displayItems((parameters, output) -> {
                                 output.accept(ME_KIT.get());
-                                output.accept(ENCODED_ME_KIT_PATTERN.get());
+
+                                ItemStack testPattern =
+                                        ENCODED_ME_KIT_PATTERN.get()
+                                                .getDefaultInstance();
+
+                                testPattern.set(
+                                        ModDataComponents.KIT_NAME.get(),
+                                        "Test Kit"
+                                );
+
+                                testPattern.set(
+                                        ModDataComponents.KIT_CONTENTS.get(),
+                                        new KitContents(List.of(
+                                                new ItemStack(Items.CHEST, 1),
+                                                new ItemStack(Items.PISTON, 2),
+                                                new ItemStack(Items.IRON_INGOT, 3)
+                                        ))
+                                );
+
+                                output.accept(testPattern);
                                 output.accept(ME_KIT_PACKAGER_ITEM.get());
                             })
                             .build()

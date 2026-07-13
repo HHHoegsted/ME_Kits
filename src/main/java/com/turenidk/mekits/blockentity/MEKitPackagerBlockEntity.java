@@ -1,9 +1,14 @@
 package com.turenidk.mekits.blockentity;
 
+import appeng.api.config.Actionable;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
+import net.minecraft.world.item.ItemStack;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IManagedGridNode;
+import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.crafting.ICraftingProvider;
 import com.turenidk.mekits.MEKits;
 import net.minecraft.core.BlockPos;
@@ -15,8 +20,10 @@ import appeng.api.networking.IInWorldGridNodeHost;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
 
-public class MEKitPackagerBlockEntity extends BlockEntity implements IInWorldGridNodeHost {
+public class MEKitPackagerBlockEntity extends BlockEntity
+        implements IInWorldGridNodeHost, IActionHost {
     private static final String GRID_NODE_TAG = "grid_node";
+    private ItemStack pendingOutput = ItemStack.EMPTY;
 
     private static final IGridNodeListener<MEKitPackagerBlockEntity> NODE_LISTENER =
             new IGridNodeListener<>() {
@@ -100,8 +107,80 @@ public class MEKitPackagerBlockEntity extends BlockEntity implements IInWorldGri
         }
     }
 
+    public boolean queueOutput(ItemStack outputStack) {
+        if (outputStack.isEmpty() || !pendingOutput.isEmpty()) {
+            return false;
+        }
+
+        pendingOutput = outputStack.copy();
+        setChanged();
+
+        return true;
+    }
+
+    public boolean hasPendingOutput() {
+        return !pendingOutput.isEmpty();
+    }
+
+    public static void serverTick(
+            net.minecraft.world.level.Level level,
+            BlockPos blockPos,
+            BlockState blockState,
+            MEKitPackagerBlockEntity blockEntity
+    ) {
+        blockEntity.processPendingOutput();
+    }
+
+    private void processPendingOutput() {
+        if (level == null || level.isClientSide() || pendingOutput.isEmpty()) {
+            return;
+        }
+
+        var grid = managedGridNode.getGrid();
+
+        if (grid == null) {
+            return;
+        }
+
+        AEItemKey outputKey = AEItemKey.of(pendingOutput);
+
+        if (outputKey == null) {
+            pendingOutput = ItemStack.EMPTY;
+            setChanged();
+            return;
+        }
+
+        long inserted = grid
+                .getStorageService()
+                .getInventory()
+                .insert(
+                        outputKey,
+                        pendingOutput.getCount(),
+                        Actionable.MODULATE,
+                        IActionSource.ofMachine(this)
+                );
+
+        if (inserted <= 0) {
+            return;
+        }
+
+        pendingOutput.shrink((int) inserted);
+
+        if (pendingOutput.isEmpty()) {
+            pendingOutput = ItemStack.EMPTY;
+        }
+
+        setChanged();
+    }
+
     public IManagedGridNode getManagedGridNode() {
         return managedGridNode;
+    }
+
+    @Nullable
+    @Override
+    public IGridNode getActionableNode() {
+        return managedGridNode.getNode();
     }
 
     @Nullable
