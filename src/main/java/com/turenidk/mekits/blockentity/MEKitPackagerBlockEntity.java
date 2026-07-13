@@ -1,6 +1,7 @@
 package com.turenidk.mekits.blockentity;
 
 import appeng.api.config.Actionable;
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
@@ -11,21 +12,38 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import com.turenidk.mekits.MEKits;
+import com.turenidk.mekits.crafting.MEKitPattern;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 public class MEKitPackagerBlockEntity extends BlockEntity
         implements IInWorldGridNodeHost, IActionHost {
 
     private static final String GRID_NODE_TAG = "grid_node";
     private static final String PENDING_OUTPUT_TAG = "pending_output";
+    private static final String PATTERN_INVENTORY_TAG = "pattern_inventory";
+
+    public static final int PATTERN_SLOT_COUNT = 9;
+
+    private final NonNullList<ItemStack> patternInventory =
+            NonNullList.withSize(
+                    PATTERN_SLOT_COUNT,
+                    ItemStack.EMPTY
+            );
 
     private ItemStack pendingOutput = ItemStack.EMPTY;
 
@@ -75,9 +93,11 @@ public class MEKitPackagerBlockEntity extends BlockEntity
     }
 
     private void onFirstTick() {
-        if (level != null && !level.isClientSide()) {
-            managedGridNode.create(level, worldPosition);
+        if (level == null || level.isClientSide()) {
+            return;
         }
+
+        managedGridNode.create(level, worldPosition);
     }
 
     @Override
@@ -103,6 +123,19 @@ public class MEKitPackagerBlockEntity extends BlockEntity
                     pendingOutput.save(registries)
             );
         }
+
+        CompoundTag patternInventoryTag = new CompoundTag();
+
+        ContainerHelper.saveAllItems(
+                patternInventoryTag,
+                patternInventory,
+                registries
+        );
+
+        tag.put(
+                PATTERN_INVENTORY_TAG,
+                patternInventoryTag
+        );
     }
 
     @Override
@@ -126,10 +159,165 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         } else {
             pendingOutput = ItemStack.EMPTY;
         }
+
+        patternInventory.clear();
+
+        if (tag.contains(PATTERN_INVENTORY_TAG)) {
+            ContainerHelper.loadAllItems(
+                    tag.getCompound(PATTERN_INVENTORY_TAG),
+                    patternInventory,
+                    registries
+            );
+        }
+    }
+
+    public boolean insertPattern(ItemStack patternStack) {
+        if (!isValidEncodedPattern(patternStack)) {
+            return false;
+        }
+
+        for (int slot = 0; slot < patternInventory.size(); slot++) {
+            if (!patternInventory.get(slot).isEmpty()) {
+                continue;
+            }
+
+            patternInventory.set(
+                    slot,
+                    patternStack.copyWithCount(1)
+            );
+
+            onPatternInventoryChanged();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public ItemStack removePattern() {
+        for (
+                int slot = patternInventory.size() - 1;
+                slot >= 0;
+                slot--
+        ) {
+            ItemStack patternStack =
+                    patternInventory.get(slot);
+
+            if (patternStack.isEmpty()) {
+                continue;
+            }
+
+            patternInventory.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+
+            onPatternInventoryChanged();
+
+            return patternStack;
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    public List<ItemStack> takePatternInventory() {
+        List<ItemStack> removedPatterns =
+                new ArrayList<>();
+
+        for (int slot = 0; slot < patternInventory.size(); slot++) {
+            ItemStack patternStack =
+                    patternInventory.get(slot);
+
+            if (patternStack.isEmpty()) {
+                continue;
+            }
+
+            removedPatterns.add(patternStack);
+            patternInventory.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+        }
+
+        if (!removedPatterns.isEmpty()) {
+            onPatternInventoryChanged();
+        }
+
+        return removedPatterns;
+    }
+
+    public List<IPatternDetails> getAvailablePatterns() {
+        Set<IPatternDetails> availablePatterns =
+                new LinkedHashSet<>();
+
+        for (ItemStack patternStack : patternInventory) {
+            if (patternStack.isEmpty()) {
+                continue;
+            }
+
+            AEItemKey definition =
+                    AEItemKey.of(patternStack);
+
+            if (definition == null) {
+                continue;
+            }
+
+            try {
+                availablePatterns.add(
+                        new MEKitPattern(definition)
+                );
+            } catch (IllegalArgumentException exception) {
+                MEKits.LOGGER.warn(
+                        "Ignoring invalid ME Kit Pattern in Packager at {}",
+                        worldPosition,
+                        exception
+                );
+            }
+        }
+
+        return List.copyOf(availablePatterns);
+    }
+
+    private boolean isValidEncodedPattern(
+            ItemStack patternStack
+    ) {
+        if (
+                patternStack.isEmpty()
+                        || !patternStack.is(
+                        MEKits.ENCODED_ME_KIT_PATTERN.get()
+                )
+        ) {
+            return false;
+        }
+
+        AEItemKey definition =
+                AEItemKey.of(patternStack);
+
+        if (definition == null) {
+            return false;
+        }
+
+        try {
+            new MEKitPattern(definition);
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    private void onPatternInventoryChanged() {
+        setChanged();
+
+        ICraftingProvider.requestUpdate(
+                managedGridNode
+        );
     }
 
     public boolean queueOutput(ItemStack outputStack) {
-        if (outputStack.isEmpty() || !pendingOutput.isEmpty()) {
+        if (
+                outputStack.isEmpty()
+                        || !pendingOutput.isEmpty()
+        ) {
             return false;
         }
 
@@ -179,7 +367,8 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return;
         }
 
-        AEItemKey outputKey = AEItemKey.of(pendingOutput);
+        AEItemKey outputKey =
+                AEItemKey.of(pendingOutput);
 
         if (outputKey == null) {
             return;
