@@ -1,0 +1,10 @@
+{
+  "itemGroup.mekits": "ME Kits",
+  "item.mekits.me_kit": "ME Kit",
+  "block.mekits.me_kit_packager": "ME Kit Packager",
+  "tooltip.mekits.me_kit.unnamed": "Unnamed Kit",
+  "tooltip.mekits.me_kit.empty": "Empty",
+  "tooltip.mekits.me_kit.contains": "Contains %s item types:",
+  "tooltip.mekits.me_kit.entry": "%sx %s",
+  "item.mekits.encoded_me_kit_pattern": "Encoded ME Kit Pattern"
+}
