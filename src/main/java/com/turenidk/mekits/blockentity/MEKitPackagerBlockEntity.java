@@ -1,28 +1,32 @@
 package com.turenidk.mekits.blockentity;
 
 import appeng.api.config.Actionable;
-import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
-import net.minecraft.world.item.ItemStack;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
+import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.IManagedGridNode;
-import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
 import com.turenidk.mekits.MEKits;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import appeng.api.networking.IInWorldGridNodeHost;
-import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
 
 public class MEKitPackagerBlockEntity extends BlockEntity
         implements IInWorldGridNodeHost, IActionHost {
+
     private static final String GRID_NODE_TAG = "grid_node";
+    private static final String PENDING_OUTPUT_TAG = "pending_output";
+
     private ItemStack pendingOutput = ItemStack.EMPTY;
 
     private static final IGridNodeListener<MEKitPackagerBlockEntity> NODE_LISTENER =
@@ -63,6 +67,7 @@ public class MEKitPackagerBlockEntity extends BlockEntity
     @Override
     public void clearRemoved() {
         super.clearRemoved();
+
         GridHelper.onFirstTick(
                 this,
                 MEKitPackagerBlockEntity::onFirstTick
@@ -91,6 +96,13 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         CompoundTag nodeTag = new CompoundTag();
         managedGridNode.saveToNBT(nodeTag);
         tag.put(GRID_NODE_TAG, nodeTag);
+
+        if (!pendingOutput.isEmpty()) {
+            tag.put(
+                    PENDING_OUTPUT_TAG,
+                    pendingOutput.save(registries)
+            );
+        }
     }
 
     @Override
@@ -104,6 +116,15 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             managedGridNode.loadFromNBT(
                     tag.getCompound(GRID_NODE_TAG)
             );
+        }
+
+        if (tag.contains(PENDING_OUTPUT_TAG)) {
+            pendingOutput = ItemStack.parseOptional(
+                    registries,
+                    tag.getCompound(PENDING_OUTPUT_TAG)
+            );
+        } else {
+            pendingOutput = ItemStack.EMPTY;
         }
     }
 
@@ -122,8 +143,20 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         return !pendingOutput.isEmpty();
     }
 
+    public ItemStack takePendingOutput() {
+        if (pendingOutput.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack outputStack = pendingOutput;
+        pendingOutput = ItemStack.EMPTY;
+        setChanged();
+
+        return outputStack;
+    }
+
     public static void serverTick(
-            net.minecraft.world.level.Level level,
+            Level level,
             BlockPos blockPos,
             BlockState blockState,
             MEKitPackagerBlockEntity blockEntity
@@ -132,7 +165,11 @@ public class MEKitPackagerBlockEntity extends BlockEntity
     }
 
     private void processPendingOutput() {
-        if (level == null || level.isClientSide() || pendingOutput.isEmpty()) {
+        if (
+                level == null
+                        || level.isClientSide()
+                        || pendingOutput.isEmpty()
+        ) {
             return;
         }
 
@@ -145,8 +182,6 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         AEItemKey outputKey = AEItemKey.of(pendingOutput);
 
         if (outputKey == null) {
-            pendingOutput = ItemStack.EMPTY;
-            setChanged();
             return;
         }
 

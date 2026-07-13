@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class MEKitPackagerBlock extends BaseEntityBlock {
+
     public static final MapCodec<MEKitPackagerBlock> CODEC =
             simpleCodec(MEKitPackagerBlock::new);
 
@@ -56,6 +58,45 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
                 blockEntityType,
                 MEKits.ME_KIT_PACKAGER_BLOCK_ENTITY.get(),
                 MEKitPackagerBlockEntity::serverTick
+        );
+    }
+
+    @Override
+    protected void onRemove(
+            BlockState blockState,
+            Level level,
+            BlockPos blockPos,
+            BlockState newBlockState,
+            boolean movedByPiston
+    ) {
+        if (blockState.is(newBlockState.getBlock())) {
+            return;
+        }
+
+        if (!level.isClientSide()) {
+            BlockEntity blockEntity =
+                    level.getBlockEntity(blockPos);
+
+            if (blockEntity instanceof MEKitPackagerBlockEntity packager) {
+                ItemStack pendingOutput =
+                        packager.takePendingOutput();
+
+                if (!pendingOutput.isEmpty()) {
+                    popResource(
+                            level,
+                            blockPos,
+                            pendingOutput
+                    );
+                }
+            }
+        }
+
+        super.onRemove(
+                blockState,
+                level,
+                blockPos,
+                newBlockState,
+                movedByPiston
         );
     }
 }
