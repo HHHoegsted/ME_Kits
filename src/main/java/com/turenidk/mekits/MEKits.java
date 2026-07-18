@@ -3,15 +3,19 @@ package com.turenidk.mekits;
 import appeng.api.AECapabilities;
 import appeng.api.crafting.PatternDetailsHelper;
 import com.mojang.logging.LogUtils;
+import com.turenidk.mekits.block.KitPatternEncoderBlock;
 import com.turenidk.mekits.block.MEKitPackagerBlock;
+import com.turenidk.mekits.blockentity.KitPatternEncoderBlockEntity;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
 import com.turenidk.mekits.component.KitContents;
 import com.turenidk.mekits.component.ModDataComponents;
 import com.turenidk.mekits.crafting.MEKitPatternDecoder;
 import com.turenidk.mekits.item.EncodedMEKitPatternItem;
 import com.turenidk.mekits.item.MEKitItem;
+import com.turenidk.mekits.menu.KitPatternEncoderMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -24,6 +28,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -49,6 +54,13 @@ public class MEKits {
             BLOCK_ENTITY_TYPES =
             DeferredRegister.create(
                     Registries.BLOCK_ENTITY_TYPE,
+                    MODID
+            );
+
+    public static final DeferredRegister<MenuType<?>>
+            MENU_TYPES =
+            DeferredRegister.create(
+                    Registries.MENU,
                     MODID
             );
 
@@ -118,6 +130,48 @@ public class MEKits {
                     ).build(null)
             );
 
+    public static final DeferredBlock<KitPatternEncoderBlock>
+            KIT_PATTERN_ENCODER =
+            BLOCKS.register(
+                    "kit_pattern_encoder",
+                    () -> new KitPatternEncoderBlock(
+                            BlockBehaviour.Properties.of()
+                                    .mapColor(MapColor.METAL)
+                                    .strength(3.5F)
+                                    .requiresCorrectToolForDrops()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem>
+            KIT_PATTERN_ENCODER_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    "kit_pattern_encoder",
+                    KIT_PATTERN_ENCODER
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<KitPatternEncoderBlockEntity>
+            > KIT_PATTERN_ENCODER_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "kit_pattern_encoder",
+                    () -> BlockEntityType.Builder.of(
+                            KitPatternEncoderBlockEntity::new,
+                            KIT_PATTERN_ENCODER.get()
+                    ).build(null)
+            );
+
+    public static final DeferredHolder<
+            MenuType<?>,
+            MenuType<KitPatternEncoderMenu>
+            > KIT_PATTERN_ENCODER_MENU =
+            MENU_TYPES.register(
+                    "kit_pattern_encoder",
+                    () -> IMenuTypeExtension.create(
+                            KitPatternEncoderMenu::new
+                    )
+            );
+
     public static final DeferredHolder<
             CreativeModeTab,
             CreativeModeTab
@@ -178,6 +232,10 @@ public class MEKits {
                                         output.accept(
                                                 ME_KIT_PACKAGER_ITEM.get()
                                         );
+
+                                        output.accept(
+                                                KIT_PATTERN_ENCODER_ITEM.get()
+                                        );
                                     }
                             )
                             .build()
@@ -201,10 +259,15 @@ public class MEKits {
                 MEKitPatternDecoder.INSTANCE
         );
 
+        com.turenidk.mekits.network.ModPayloads.register(
+                modEventBus
+        );
+
         ModDataComponents.register(modEventBus);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
+        MENU_TYPES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
 
         modEventBus.addListener(

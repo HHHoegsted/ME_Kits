@@ -4,8 +4,21 @@
   "item.mekits.blank_me_kit_pattern": "Blank ME Kit Pattern",
   "item.mekits.encoded_me_kit_pattern": "Encoded ME Kit Pattern",
   "block.mekits.me_kit_packager": "ME Kit Packager",
+  "block.mekits.kit_pattern_encoder": "Kit Pattern Encoder",
+  "menu.mekits.kit_pattern_encoder": "Kit Pattern Encoder",
+  "screen.mekits.kit_pattern_encoder.contents": "Kit contents",
+  "screen.mekits.kit_pattern_encoder.name": "Kit name: %s",
+  "screen.mekits.kit_pattern_encoder.name_label": "Name:",
   "tooltip.mekits.me_kit.unnamed": "Unnamed Kit",
   "tooltip.mekits.me_kit.empty": "Empty",
   "tooltip.mekits.me_kit.contains": "Contains %s item types:",
-  "tooltip.mekits.me_kit.entry": "%sx %s"
+  "tooltip.mekits.me_kit.entry": "%sx %s",
+  "screen.mekits.kit_pattern_encoder.encode": "Encode",
+  "message.mekits.encoder.success": "ME Kit Pattern encoded",
+  "message.mekits.encoder.output_occupied": "Remove the existing encoded pattern first",
+  "message.mekits.encoder.no_blank_pattern": "Insert a Blank ME Kit Pattern",
+  "message.mekits.encoder.name_required": "Enter a kit name",
+  "message.mekits.encoder.contents_required": "Define at least one kit item",
+  "message.mekits.encoder.invalid_contents": "The kit contains an invalid item definition",
+  "message.mekits.encoder.internal_error": "The pattern could not be encoded"
 }

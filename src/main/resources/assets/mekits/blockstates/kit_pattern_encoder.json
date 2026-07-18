@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "mekits:block/kit_pattern_encoder"
+    }
+  }
+}
