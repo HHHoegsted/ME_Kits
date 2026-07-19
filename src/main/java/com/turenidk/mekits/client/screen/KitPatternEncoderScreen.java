@@ -1,5 +1,7 @@
 package com.turenidk.mekits.client.screen;
 
+import com.turenidk.mekits.component.ModDataComponents;
+import com.turenidk.mekits.logic.KitPatternEncoderLogic;
 import com.turenidk.mekits.menu.KitPatternEncoderMenu;
 import com.turenidk.mekits.network.payload.AdjustIngredientQuantityPayload;
 import com.turenidk.mekits.network.payload.ClearEditorStatePayload;
@@ -13,6 +15,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,6 +67,20 @@ public class KitPatternEncoderScreen
     private EditBox kitNameField;
 
     private boolean draggingScrollbar;
+
+    /*
+     * The name is not a normal menu slot, so the screen watches the
+     * encoded-pattern slot for transitions and copies the synchronized
+     * pattern name into the text field when a pattern is inserted.
+     *
+     * We deliberately do not continuously mirror the pattern name:
+     * Clear must be allowed to empty the editor while the encoded
+     * pattern remains in the output slot.
+     */
+    private boolean encodedPatternWasPresent;
+
+    private String observedEncodedPatternName =
+            "";
 
     public KitPatternEncoderScreen(
             @NotNull KitPatternEncoderMenu menu,
@@ -178,9 +195,101 @@ public class KitPatternEncoderScreen
                         .build()
         );
 
+        ItemStack initialEncodedPattern =
+                getEncodedPatternStack();
+
+        encodedPatternWasPresent =
+                !initialEncodedPattern.isEmpty();
+
+        observedEncodedPatternName =
+                getEncodedPatternName(
+                        initialEncodedPattern
+                );
+
         setInitialFocus(
                 kitNameField
         );
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+
+        if (kitNameField == null) {
+            return;
+        }
+
+        ItemStack currentEncodedPattern =
+                getEncodedPatternStack();
+
+        boolean encodedPatternIsPresent =
+                !currentEncodedPattern.isEmpty();
+
+        String currentEncodedPatternName =
+                getEncodedPatternName(
+                        currentEncodedPattern
+                );
+
+        boolean patternWasInserted =
+                encodedPatternIsPresent
+                        && !encodedPatternWasPresent;
+
+        boolean insertedPatternChanged =
+                encodedPatternIsPresent
+                        && encodedPatternWasPresent
+                        && !currentEncodedPatternName.equals(
+                        observedEncodedPatternName
+                );
+
+        if (
+                (patternWasInserted || insertedPatternChanged)
+                        && !currentEncodedPatternName.isBlank()
+        ) {
+            kitNameField.setValue(
+                    currentEncodedPatternName
+            );
+        }
+
+        encodedPatternWasPresent =
+                encodedPatternIsPresent;
+
+        observedEncodedPatternName =
+                currentEncodedPatternName;
+    }
+
+    private @NotNull ItemStack getEncodedPatternStack() {
+        int encodedPatternMenuSlot =
+                KitPatternEncoderLogic
+                        .ENCODED_PATTERN_SLOT;
+
+        if (
+                encodedPatternMenuSlot < 0
+                        || encodedPatternMenuSlot
+                        >= menu.slots.size()
+        ) {
+            return ItemStack.EMPTY;
+        }
+
+        return menu.getSlot(
+                encodedPatternMenuSlot
+        ).getItem();
+    }
+
+    private @NotNull String getEncodedPatternName(
+            @NotNull ItemStack encodedPattern
+    ) {
+        if (encodedPattern.isEmpty()) {
+            return "";
+        }
+
+        String encodedPatternName =
+                encodedPattern.get(
+                        ModDataComponents.KIT_NAME.get()
+                );
+
+        return encodedPatternName == null
+                ? ""
+                : encodedPatternName;
     }
 
     private void sendKitNameUpdate(

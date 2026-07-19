@@ -2,6 +2,7 @@ package com.turenidk.mekits.menu;
 
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.blockentity.KitPatternEncoderBlockEntity;
+import com.turenidk.mekits.logic.KitPatternEncoderLogic;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -335,10 +336,10 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         return changed;
     }
 
-    public @NotNull KitPatternEncoderBlockEntity.EncodeResult
+    public @NotNull KitPatternEncoderLogic.EncodeResult
     encodePattern() {
         if (encoder == null) {
-            return KitPatternEncoderBlockEntity
+            return KitPatternEncoderLogic
                     .EncodeResult
                     .INTERNAL_ERROR;
         }

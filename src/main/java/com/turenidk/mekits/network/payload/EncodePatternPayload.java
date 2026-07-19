@@ -1,7 +1,7 @@
 package com.turenidk.mekits.network.payload;
 
 import com.turenidk.mekits.MEKits;
-import com.turenidk.mekits.blockentity.KitPatternEncoderBlockEntity;
+import com.turenidk.mekits.logic.KitPatternEncoderLogic;
 import com.turenidk.mekits.menu.KitPatternEncoderMenu;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.chat.Component;
@@ -58,13 +58,9 @@ public final class EncodePatternPayload
             return;
         }
 
-        KitPatternEncoderBlockEntity.EncodeResult result =
+        KitPatternEncoderLogic.EncodeResult result =
                 menu.encodePattern();
 
-        /*
-         * Immediately synchronize the consumed blank and newly
-         * created output pattern with the open client menu.
-         */
         menu.broadcastChanges();
 
         String messageKey =
@@ -92,7 +88,9 @@ public final class EncodePatternPayload
                 };
 
         context.player().displayClientMessage(
-                Component.translatable(messageKey),
+                Component.translatable(
+                        messageKey
+                ),
                 true
         );
     }
