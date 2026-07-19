@@ -1,5 +1,7 @@
 package com.turenidk.mekits.network;
 
+import com.turenidk.mekits.network.payload.AdjustIngredientQuantityPayload;
+import com.turenidk.mekits.network.payload.ClearEditorStatePayload;
 import com.turenidk.mekits.network.payload.EncodePatternPayload;
 import com.turenidk.mekits.network.payload.UpdateKitNamePayload;
 import net.neoforged.bus.api.IEventBus;
@@ -8,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ModPayloads {
 
-    private static final String NETWORK_VERSION = "1";
+    private static final String NETWORK_VERSION = "3";
 
     private ModPayloads() {
     }
@@ -39,6 +41,18 @@ public final class ModPayloads {
                 EncodePatternPayload.TYPE,
                 EncodePatternPayload.STREAM_CODEC,
                 EncodePatternPayload::handle
+        );
+
+        registrar.playToServer(
+                AdjustIngredientQuantityPayload.TYPE,
+                AdjustIngredientQuantityPayload.STREAM_CODEC,
+                AdjustIngredientQuantityPayload::handle
+        );
+
+        registrar.playToServer(
+                ClearEditorStatePayload.TYPE,
+                ClearEditorStatePayload.STREAM_CODEC,
+                ClearEditorStatePayload::handle
         );
     }
 }

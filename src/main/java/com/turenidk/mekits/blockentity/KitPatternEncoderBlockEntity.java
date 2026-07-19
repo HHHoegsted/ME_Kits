@@ -203,14 +203,86 @@ public class KitPatternEncoderBlockEntity extends BlockEntity {
             return false;
         }
 
-        ItemStack definition =
-                representativeStack.copy();
+        int maximumQuantity =
+                representativeStack.getMaxStackSize();
 
-        definition.setCount(quantity);
+        int validatedQuantity =
+                Math.min(
+                        quantity,
+                        maximumQuantity
+                );
+
+        ItemStack definition =
+                representativeStack.copyWithCount(
+                        validatedQuantity
+                );
 
         ingredientDefinitionHandler.setStackInSlot(
                 slot,
                 definition
+        );
+
+        return true;
+    }
+
+    public boolean adjustIngredientDefinitionQuantity(
+            int slot,
+            int direction,
+            boolean jumpToLimit
+    ) {
+        if (
+                slot < 0
+                        || slot >= MAX_INGREDIENT_DEFINITIONS
+                        || direction == 0
+        ) {
+            return false;
+        }
+
+        ItemStack currentDefinition =
+                ingredientDefinitionHandler.getStackInSlot(
+                        slot
+                );
+
+        if (currentDefinition.isEmpty()) {
+            return false;
+        }
+
+        int currentQuantity =
+                currentDefinition.getCount();
+
+        int maximumQuantity =
+                currentDefinition.getMaxStackSize();
+
+        int newQuantity;
+
+        if (jumpToLimit) {
+            newQuantity =
+                    direction > 0
+                            ? maximumQuantity
+                            : 1;
+        } else if (direction > 0) {
+            newQuantity =
+                    Math.min(
+                            currentQuantity + 1,
+                            maximumQuantity
+                    );
+        } else {
+            newQuantity =
+                    Math.max(
+                            currentQuantity - 1,
+                            1
+                    );
+        }
+
+        if (newQuantity == currentQuantity) {
+            return false;
+        }
+
+        ingredientDefinitionHandler.setStackInSlot(
+                slot,
+                currentDefinition.copyWithCount(
+                        newQuantity
+                )
         );
 
         return true;
@@ -236,6 +308,36 @@ public class KitPatternEncoderBlockEntity extends BlockEntity {
                 slot,
                 ItemStack.EMPTY
         );
+
+        return true;
+    }
+
+    public boolean clearEditorState() {
+        boolean changed =
+                !kitName.isEmpty();
+
+        kitName = "";
+
+        for (int slot = 0; slot < MAX_INGREDIENT_DEFINITIONS; slot++) {
+            if (
+                    !ingredientDefinitionHandler
+                            .getStackInSlot(slot)
+                            .isEmpty()
+            ) {
+                ingredientDefinitions.set(
+                        slot,
+                        ItemStack.EMPTY
+                );
+
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return false;
+        }
+
+        setChanged();
 
         return true;
     }
