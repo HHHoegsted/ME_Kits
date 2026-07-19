@@ -1,25 +1,23 @@
 package com.turenidk.mekits.menu;
 
+import appeng.menu.AEBaseMenu;
 import com.turenidk.mekits.MEKits;
-import com.turenidk.mekits.blockentity.KitPatternEncoderBlockEntity;
+import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.logic.KitPatternEncoderLogic;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class KitPatternEncoderMenu extends AbstractContainerMenu {
+public class KitPatternEncoderMenu
+        extends AEBaseMenu {
 
     public static final int MAX_KIT_NAME_LENGTH = 64;
 
@@ -29,8 +27,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
 
     public static final int INGREDIENT_PAGE_COUNT =
             (
-                    KitPatternEncoderBlockEntity
-                            .MAX_INGREDIENT_DEFINITIONS
+                    KitPatternEncoderLogic.MAX_INGREDIENT_DEFINITIONS
                             - VISIBLE_INGREDIENT_SLOT_COUNT
             )
                     / INGREDIENT_PAGE_STRIDE
@@ -57,12 +54,11 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
     private static final int HOTBAR_END =
             HOTBAR_START + 9;
 
-    private final ContainerLevelAccess access;
+    @NotNull
+    private final KitPatternEncoderLogic encoderLogic;
 
-    @Nullable
-    private final KitPatternEncoderBlockEntity encoder;
-
-    private final String kitName;
+    @NotNull
+    private String kitName;
 
     private final DataSlot ingredientPage =
             DataSlot.standalone();
@@ -70,69 +66,35 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
     public KitPatternEncoderMenu(
             int containerId,
             @NotNull Inventory playerInventory,
-            @NotNull RegistryFriendlyByteBuf extraData
-    ) {
-        this(
-                containerId,
-                playerInventory,
-                createClientPatternHandler(),
-                createClientIngredientHandler(),
-                ContainerLevelAccess.NULL,
-                null,
-                extraData.readUtf(MAX_KIT_NAME_LENGTH)
-        );
-    }
-
-    public KitPatternEncoderMenu(
-            int containerId,
-            @NotNull Inventory playerInventory,
-            @NotNull KitPatternEncoderBlockEntity encoder
-    ) {
-        this(
-                containerId,
-                playerInventory,
-                encoder.getPatternItemHandler(),
-                requireModifiableIngredientHandler(
-                        encoder.getIngredientDefinitionHandler()
-                ),
-                encoder.getLevel() == null
-                        ? ContainerLevelAccess.NULL
-                        : ContainerLevelAccess.create(
-                        encoder.getLevel(),
-                        encoder.getBlockPos()
-                ),
-                encoder,
-                encoder.getKitName()
-        );
-    }
-
-    private KitPatternEncoderMenu(
-            int containerId,
-            @NotNull Inventory playerInventory,
-            @NotNull IItemHandler patternItemHandler,
-            @NotNull IItemHandlerModifiable ingredientDefinitionHandler,
-            @NotNull ContainerLevelAccess access,
-            @Nullable KitPatternEncoderBlockEntity encoder,
-            @NotNull String kitName
+            @NotNull KitPatternEncoderHost host
     ) {
         super(
                 MEKits.KIT_PATTERN_ENCODER_MENU.get(),
-                containerId
+                containerId,
+                playerInventory,
+                host
         );
 
-        this.access = access;
-        this.encoder = encoder;
-        this.kitName = kitName;
+        this.encoderLogic =
+                host.getEncoderLogic();
 
-        ingredientPage.set(0);
+        this.kitName =
+                encoderLogic.getKitName();
+
+        ingredientPage.set(
+                0
+        );
 
         addEncoderSlots(
-                patternItemHandler
+                encoderLogic.getPatternItemHandler()
         );
 
         addGhostIngredientSlots(
                 new PagedIngredientHandler(
-                        ingredientDefinitionHandler
+                        requireModifiableIngredientHandler(
+                                encoderLogic
+                                        .getIngredientDefinitionHandler()
+                        )
                 )
         );
 
@@ -171,6 +133,13 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         return kitName;
     }
 
+    public void setInitialKitName(
+            @NotNull String initialKitName
+    ) {
+        this.kitName =
+                initialKitName;
+    }
+
     public int getIngredientPage() {
         return ingredientPage.get();
     }
@@ -200,8 +169,9 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
     private int getFirstDefinitionSlotForPage(
             int page
     ) {
-        return clampIngredientPage(page)
-                * INGREDIENT_PAGE_STRIDE;
+        return clampIngredientPage(
+                page
+        ) * INGREDIENT_PAGE_STRIDE;
     }
 
     private int getDefinitionSlotForVisibleSlot(
@@ -243,11 +213,6 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
                 getIngredientPage()
                         != previousPage
         ) {
-            /*
-             * The nine menu slots now refer to a different range of
-             * the 27-slot backing handler. Force all nine newly visible
-             * values to be sent to the client.
-             */
             broadcastFullState();
         }
 
@@ -285,13 +250,12 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
     public void updateKitName(
             @NotNull String newKitName
     ) {
-        if (encoder == null) {
-            return;
-        }
-
-        encoder.setKitName(
+        encoderLogic.setKitName(
                 newKitName
         );
+
+        kitName =
+                encoderLogic.getKitName();
     }
 
     public boolean adjustIngredientQuantity(
@@ -299,16 +263,13 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
             int direction,
             boolean jumpToLimit
     ) {
-        if (encoder == null) {
-            return false;
-        }
-
         boolean changed =
-                encoder.adjustIngredientDefinitionQuantity(
-                        definitionSlot,
-                        direction,
-                        jumpToLimit
-                );
+                encoderLogic
+                        .adjustIngredientDefinitionQuantity(
+                                definitionSlot,
+                                direction,
+                                jumpToLimit
+                        );
 
         if (changed) {
             broadcastChanges();
@@ -318,18 +279,13 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
     }
 
     public boolean clearEditorState() {
-        if (encoder == null) {
-            return false;
-        }
-
         boolean changed =
-                encoder.clearEditorState();
+                encoderLogic.clearEditorState();
 
         if (changed) {
-            /*
-             * Clear affects all 27 definitions, including definitions
-             * outside the currently visible nine-slot window.
-             */
+            kitName =
+                    encoderLogic.getKitName();
+
             broadcastFullState();
         }
 
@@ -338,13 +294,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
 
     public @NotNull KitPatternEncoderLogic.EncodeResult
     encodePattern() {
-        if (encoder == null) {
-            return KitPatternEncoderLogic
-                    .EncodeResult
-                    .INTERNAL_ERROR;
-        }
-
-        return encoder.encodePattern();
+        return encoderLogic.encodePattern();
     }
 
     private void addEncoderSlots(
@@ -353,7 +303,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         addSlot(
                 new SlotItemHandler(
                         patternItemHandler,
-                        KitPatternEncoderBlockEntity.BLANK_PATTERN_SLOT,
+                        KitPatternEncoderLogic.BLANK_PATTERN_SLOT,
                         145,
                         49
                 )
@@ -362,7 +312,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         addSlot(
                 new SlotItemHandler(
                         patternItemHandler,
-                        KitPatternEncoderBlockEntity.ENCODED_PATTERN_SLOT,
+                        KitPatternEncoderLogic.ENCODED_PATTERN_SLOT,
                         145,
                         93
                 )
@@ -424,56 +374,6 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         }
     }
 
-    private static @NotNull IItemHandler
-    createClientPatternHandler() {
-        return new ItemStackHandler(
-                KitPatternEncoderBlockEntity.SLOT_COUNT
-        ) {
-            @Override
-            public boolean isItemValid(
-                    int slot,
-                    @NotNull ItemStack stack
-            ) {
-                return switch (slot) {
-                    case KitPatternEncoderBlockEntity.BLANK_PATTERN_SLOT ->
-                            stack.is(
-                                    MEKits.BLANK_ME_KIT_PATTERN.get()
-                            );
-
-                    case KitPatternEncoderBlockEntity.ENCODED_PATTERN_SLOT ->
-                            stack.is(
-                                    MEKits.ENCODED_ME_KIT_PATTERN.get()
-                            );
-
-                    default -> false;
-                };
-            }
-
-            @Override
-            public int getSlotLimit(
-                    int slot
-            ) {
-                return switch (slot) {
-                    case KitPatternEncoderBlockEntity.BLANK_PATTERN_SLOT ->
-                            64;
-
-                    case KitPatternEncoderBlockEntity.ENCODED_PATTERN_SLOT ->
-                            1;
-
-                    default -> 0;
-                };
-            }
-        };
-    }
-
-    private static @NotNull IItemHandlerModifiable
-    createClientIngredientHandler() {
-        return new ItemStackHandler(
-                KitPatternEncoderBlockEntity
-                        .MAX_INGREDIENT_DEFINITIONS
-        );
-    }
-
     @Override
     public void clicked(
             int slotId,
@@ -487,12 +387,11 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         ) {
             if (
                     clickType != ClickType.PICKUP
-                            || (button != 0 && button != 1)
+                            || (
+                            button != 0
+                                    && button != 1
+                    )
             ) {
-                return;
-            }
-
-            if (encoder == null) {
                 return;
             }
 
@@ -513,7 +412,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
                     getCarried();
 
             if (carriedStack.isEmpty()) {
-                encoder.clearIngredientDefinition(
+                encoderLogic.clearIngredientDefinition(
                         definitionSlot
                 );
             } else {
@@ -522,7 +421,7 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
                                 ? 1
                                 : carriedStack.getCount();
 
-                encoder.setIngredientDefinition(
+                encoderLogic.setIngredientDefinition(
                         definitionSlot,
                         carriedStack,
                         quantity
@@ -538,17 +437,6 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
                 button,
                 clickType,
                 player
-        );
-    }
-
-    @Override
-    public boolean stillValid(
-            @NotNull Player player
-    ) {
-        return stillValid(
-                access,
-                player,
-                MEKits.KIT_PATTERN_ENCODER.get()
         );
     }
 
@@ -586,7 +474,10 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
         ItemStack originalStack =
                 clickedStack.copy();
 
-        if (clickedSlotIndex < ENCODER_SLOT_COUNT) {
+        if (
+                clickedSlotIndex
+                        < ENCODER_SLOT_COUNT
+        ) {
             if (
                     !moveItemStackTo(
                             clickedStack,
@@ -605,8 +496,8 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
             if (
                     !moveItemStackTo(
                             clickedStack,
-                            KitPatternEncoderBlockEntity.BLANK_PATTERN_SLOT,
-                            KitPatternEncoderBlockEntity.BLANK_PATTERN_SLOT
+                            KitPatternEncoderLogic.BLANK_PATTERN_SLOT,
+                            KitPatternEncoderLogic.BLANK_PATTERN_SLOT
                                     + 1,
                             false
                     )
@@ -621,8 +512,8 @@ public class KitPatternEncoderMenu extends AbstractContainerMenu {
             if (
                     !moveItemStackTo(
                             clickedStack,
-                            KitPatternEncoderBlockEntity.ENCODED_PATTERN_SLOT,
-                            KitPatternEncoderBlockEntity.ENCODED_PATTERN_SLOT
+                            KitPatternEncoderLogic.ENCODED_PATTERN_SLOT,
+                            KitPatternEncoderLogic.ENCODED_PATTERN_SLOT
                                     + 1,
                             false
                     )

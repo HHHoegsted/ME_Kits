@@ -2,19 +2,22 @@ package com.turenidk.mekits;
 
 import appeng.api.AECapabilities;
 import appeng.api.crafting.PatternDetailsHelper;
+import appeng.items.parts.PartItem;
+import appeng.menu.implementations.MenuTypeBuilder;
 import com.mojang.logging.LogUtils;
-import com.turenidk.mekits.block.KitPatternEncoderBlock;
 import com.turenidk.mekits.block.MEKitPackagerBlock;
-import com.turenidk.mekits.blockentity.KitPatternEncoderBlockEntity;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
 import com.turenidk.mekits.component.KitContents;
 import com.turenidk.mekits.component.ModDataComponents;
 import com.turenidk.mekits.crafting.MEKitPatternDecoder;
 import com.turenidk.mekits.item.EncodedMEKitPatternItem;
 import com.turenidk.mekits.item.MEKitItem;
+import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.menu.KitPatternEncoderMenu;
+import com.turenidk.mekits.part.KitPatternEncoderPart;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -28,7 +31,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -41,14 +43,19 @@ import java.util.List;
 public class MEKits {
 
     public static final String MODID = "mekits";
+
     public static final Logger LOGGER =
             LogUtils.getLogger();
 
     public static final DeferredRegister.Items ITEMS =
-            DeferredRegister.createItems(MODID);
+            DeferredRegister.createItems(
+                    MODID
+            );
 
     public static final DeferredRegister.Blocks BLOCKS =
-            DeferredRegister.createBlocks(MODID);
+            DeferredRegister.createBlocks(
+                    MODID
+            );
 
     public static final DeferredRegister<BlockEntityType<?>>
             BLOCK_ENTITY_TYPES =
@@ -99,14 +106,30 @@ public class MEKits {
                     )
             );
 
+    public static final DeferredItem<
+            PartItem<KitPatternEncoderPart>
+            > KIT_PATTERN_ENCODER_PART =
+            ITEMS.register(
+                    "kit_pattern_encoder_part",
+                    () -> new PartItem<>(
+                            new Item.Properties(),
+                            KitPatternEncoderPart.class,
+                            KitPatternEncoderPart::new
+                    )
+            );
+
     public static final DeferredBlock<MEKitPackagerBlock>
             ME_KIT_PACKAGER =
             BLOCKS.register(
                     "me_kit_packager",
                     () -> new MEKitPackagerBlock(
                             BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(3.5F)
+                                    .mapColor(
+                                            MapColor.METAL
+                                    )
+                                    .strength(
+                                            3.5F
+                                    )
                                     .requiresCorrectToolForDrops()
                     )
             );
@@ -130,46 +153,49 @@ public class MEKits {
                     ).build(null)
             );
 
-    public static final DeferredBlock<KitPatternEncoderBlock>
-            KIT_PATTERN_ENCODER =
-            BLOCKS.register(
-                    "kit_pattern_encoder",
-                    () -> new KitPatternEncoderBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(3.5F)
-                                    .requiresCorrectToolForDrops()
-                    )
-            );
-
-    public static final DeferredItem<BlockItem>
-            KIT_PATTERN_ENCODER_ITEM =
-            ITEMS.registerSimpleBlockItem(
-                    "kit_pattern_encoder",
-                    KIT_PATTERN_ENCODER
-            );
-
-    public static final DeferredHolder<
-            BlockEntityType<?>,
-            BlockEntityType<KitPatternEncoderBlockEntity>
-            > KIT_PATTERN_ENCODER_BLOCK_ENTITY =
-            BLOCK_ENTITY_TYPES.register(
-                    "kit_pattern_encoder",
-                    () -> BlockEntityType.Builder.of(
-                            KitPatternEncoderBlockEntity::new,
-                            KIT_PATTERN_ENCODER.get()
-                    ).build(null)
-            );
-
     public static final DeferredHolder<
             MenuType<?>,
             MenuType<KitPatternEncoderMenu>
             > KIT_PATTERN_ENCODER_MENU =
             MENU_TYPES.register(
                     "kit_pattern_encoder",
-                    () -> IMenuTypeExtension.create(
-                            KitPatternEncoderMenu::new
-                    )
+                    () -> MenuTypeBuilder
+                            .create(
+                                    KitPatternEncoderMenu::new,
+                                    KitPatternEncoderHost.class
+                            )
+                            .withMenuTitle(
+                                    host -> Component.translatable(
+                                            "menu.mekits.kit_pattern_encoder"
+                                    )
+                            )
+                            .withInitialData(
+                                    (
+                                            host,
+                                            buffer
+                                    ) -> buffer.writeUtf(
+                                            host.getEncoderLogic()
+                                                    .getKitName(),
+                                            KitPatternEncoderMenu
+                                                    .MAX_KIT_NAME_LENGTH
+                                    ),
+                                    (
+                                            host,
+                                            menu,
+                                            buffer
+                                    ) -> menu.setInitialKitName(
+                                            buffer.readUtf(
+                                                    KitPatternEncoderMenu
+                                                            .MAX_KIT_NAME_LENGTH
+                                            )
+                                    )
+                            )
+                            .buildUnregistered(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "kit_pattern_encoder"
+                                    )
+                            )
             );
 
     public static final DeferredHolder<
@@ -189,7 +215,10 @@ public class MEKits {
                                             .getDefaultInstance()
                             )
                             .displayItems(
-                                    (parameters, output) -> {
+                                    (
+                                            parameters,
+                                            output
+                                    ) -> {
                                         output.accept(
                                                 ME_KIT.get()
                                         );
@@ -199,16 +228,21 @@ public class MEKits {
                                         );
 
                                         ItemStack testPattern =
-                                                ENCODED_ME_KIT_PATTERN.get()
+                                                ENCODED_ME_KIT_PATTERN
+                                                        .get()
                                                         .getDefaultInstance();
 
                                         testPattern.set(
-                                                ModDataComponents.KIT_NAME.get(),
+                                                ModDataComponents
+                                                        .KIT_NAME
+                                                        .get(),
                                                 "Test Kit"
                                         );
 
                                         testPattern.set(
-                                                ModDataComponents.KIT_CONTENTS.get(),
+                                                ModDataComponents
+                                                        .KIT_CONTENTS
+                                                        .get(),
                                                 new KitContents(
                                                         List.of(
                                                                 new ItemStack(
@@ -227,14 +261,16 @@ public class MEKits {
                                                 )
                                         );
 
-                                        output.accept(testPattern);
+                                        output.accept(
+                                                testPattern
+                                        );
 
                                         output.accept(
                                                 ME_KIT_PACKAGER_ITEM.get()
                                         );
 
                                         output.accept(
-                                                KIT_PATTERN_ENCODER_ITEM.get()
+                                                KIT_PATTERN_ENCODER_PART.get()
                                         );
                                     }
                             )
@@ -247,7 +283,10 @@ public class MEKits {
         event.registerBlockEntity(
                 AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 ME_KIT_PACKAGER_BLOCK_ENTITY.get(),
-                (blockEntity, direction) -> blockEntity
+                (
+                        blockEntity,
+                        direction
+                ) -> blockEntity
         );
     }
 
@@ -263,12 +302,29 @@ public class MEKits {
                 modEventBus
         );
 
-        ModDataComponents.register(modEventBus);
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
-        BLOCK_ENTITY_TYPES.register(modEventBus);
-        MENU_TYPES.register(modEventBus);
-        CREATIVE_MODE_TABS.register(modEventBus);
+        ModDataComponents.register(
+                modEventBus
+        );
+
+        BLOCKS.register(
+                modEventBus
+        );
+
+        ITEMS.register(
+                modEventBus
+        );
+
+        BLOCK_ENTITY_TYPES.register(
+                modEventBus
+        );
+
+        MENU_TYPES.register(
+                modEventBus
+        );
+
+        CREATIVE_MODE_TABS.register(
+                modEventBus
+        );
 
         modEventBus.addListener(
                 MEKits::registerCapabilities
