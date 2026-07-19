@@ -21,5 +21,6 @@
   "message.mekits.encoder.name_required": "Enter a kit name",
   "message.mekits.encoder.contents_required": "Define at least one kit item",
   "message.mekits.encoder.invalid_contents": "The kit contains an invalid item definition",
-  "message.mekits.encoder.internal_error": "The pattern could not be encoded"
+  "message.mekits.encoder.internal_error": "The pattern could not be encoded",
+  "message.mekits.encoder_offline": "Kit Pattern Encoder is offline"
 }

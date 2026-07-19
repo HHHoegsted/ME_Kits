@@ -9,6 +9,7 @@ import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.logic.KitPatternEncoderLogic;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -54,18 +55,32 @@ public final class KitPatternEncoderPart
                         position
                 );
 
-        if (
-                !handledByBase
-                        && !player.level().isClientSide()
-        ) {
-            MenuOpener.open(
-                    MEKits.KIT_PATTERN_ENCODER_MENU.get(),
-                    player,
-                    MenuLocators.forPart(
-                            this
-                    )
-            );
+        if (handledByBase) {
+            return true;
         }
+
+        if (player.level().isClientSide()) {
+            return true;
+        }
+
+        if (!getMainNode().isActive()) {
+            player.displayClientMessage(
+                    Component.translatable(
+                            "message.mekits.encoder_offline"
+                    ),
+                    true
+            );
+
+            return true;
+        }
+
+        MenuOpener.open(
+                MEKits.KIT_PATTERN_ENCODER_MENU.get(),
+                player,
+                MenuLocators.forPart(
+                        this
+                )
+        );
 
         return true;
     }
