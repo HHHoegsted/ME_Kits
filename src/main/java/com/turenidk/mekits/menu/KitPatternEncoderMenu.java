@@ -55,12 +55,21 @@ public class KitPatternEncoderMenu
             HOTBAR_START + 9;
 
     @NotNull
+    private final KitPatternEncoderHost host;
+
+    @NotNull
     private final KitPatternEncoderLogic encoderLogic;
 
     @NotNull
     private String kitName;
 
     private final DataSlot ingredientPage =
+            DataSlot.standalone();
+
+    private final DataSlot poweredState =
+            DataSlot.standalone();
+
+    private final DataSlot activeState =
             DataSlot.standalone();
 
     public KitPatternEncoderMenu(
@@ -75,6 +84,8 @@ public class KitPatternEncoderMenu
                 host
         );
 
+        this.host = host;
+
         this.encoderLogic =
                 host.getEncoderLogic();
 
@@ -84,6 +95,8 @@ public class KitPatternEncoderMenu
         ingredientPage.set(
                 0
         );
+
+        updateOperationalState();
 
         addEncoderSlots(
                 encoderLogic.getPatternItemHandler()
@@ -108,6 +121,14 @@ public class KitPatternEncoderMenu
 
         addDataSlot(
                 ingredientPage
+        );
+
+        addDataSlot(
+                poweredState
+        );
+
+        addDataSlot(
+                activeState
         );
     }
 
@@ -138,6 +159,42 @@ public class KitPatternEncoderMenu
     ) {
         this.kitName =
                 initialKitName;
+    }
+
+    public boolean isPowered() {
+        return poweredState.get() != 0;
+    }
+
+    public boolean isOperational() {
+        return activeState.get() != 0;
+    }
+
+    private void updateOperationalState() {
+        poweredState.set(
+                host.isEncoderPowered()
+                        ? 1
+                        : 0
+        );
+
+        activeState.set(
+                host.isEncoderActive()
+                        ? 1
+                        : 0
+        );
+    }
+
+    @Override
+    public void broadcastChanges() {
+        updateOperationalState();
+
+        super.broadcastChanges();
+    }
+
+    @Override
+    public void broadcastFullState() {
+        updateOperationalState();
+
+        super.broadcastFullState();
     }
 
     public int getIngredientPage() {
@@ -195,6 +252,10 @@ public class KitPatternEncoderMenu
             @NotNull Player player,
             int buttonId
     ) {
+        if (!isOperational()) {
+            return false;
+        }
+
         if (
                 buttonId < 0
                         || buttonId >= INGREDIENT_PAGE_COUNT
@@ -250,6 +311,10 @@ public class KitPatternEncoderMenu
     public void updateKitName(
             @NotNull String newKitName
     ) {
+        if (!isOperational()) {
+            return;
+        }
+
         encoderLogic.setKitName(
                 newKitName
         );
@@ -263,6 +328,10 @@ public class KitPatternEncoderMenu
             int direction,
             boolean jumpToLimit
     ) {
+        if (!isOperational()) {
+            return false;
+        }
+
         boolean changed =
                 encoderLogic
                         .adjustIngredientDefinitionQuantity(
@@ -279,6 +348,10 @@ public class KitPatternEncoderMenu
     }
 
     public boolean clearEditorState() {
+        if (!isOperational()) {
+            return false;
+        }
+
         boolean changed =
                 encoderLogic.clearEditorState();
 
@@ -294,6 +367,10 @@ public class KitPatternEncoderMenu
 
     public @NotNull KitPatternEncoderLogic.EncodeResult
     encodePattern() {
+        if (!isOperational()) {
+            return KitPatternEncoderLogic.EncodeResult.INTERNAL_ERROR;
+        }
+
         return encoderLogic.encodePattern();
     }
 
@@ -301,7 +378,7 @@ public class KitPatternEncoderMenu
             @NotNull IItemHandler patternItemHandler
     ) {
         addSlot(
-                new SlotItemHandler(
+                new EncoderSlot(
                         patternItemHandler,
                         KitPatternEncoderLogic.BLANK_PATTERN_SLOT,
                         145,
@@ -310,7 +387,7 @@ public class KitPatternEncoderMenu
         );
 
         addSlot(
-                new SlotItemHandler(
+                new EncoderSlot(
                         patternItemHandler,
                         KitPatternEncoderLogic.ENCODED_PATTERN_SLOT,
                         145,
@@ -381,6 +458,14 @@ public class KitPatternEncoderMenu
             @NotNull ClickType clickType,
             @NotNull Player player
     ) {
+        if (
+                slotId >= 0
+                        && slotId < GHOST_SLOT_END
+                        && !isOperational()
+        ) {
+            return;
+        }
+
         if (
                 slotId >= GHOST_SLOT_START
                         && slotId < GHOST_SLOT_END
@@ -453,6 +538,13 @@ public class KitPatternEncoderMenu
         }
 
         if (
+                !isOperational()
+                        && clickedSlotIndex < GHOST_SLOT_END
+        ) {
+            return ItemStack.EMPTY;
+        }
+
+        if (
                 clickedSlotIndex >= GHOST_SLOT_START
                         && clickedSlotIndex < GHOST_SLOT_END
         ) {
@@ -489,7 +581,8 @@ public class KitPatternEncoderMenu
                 return ItemStack.EMPTY;
             }
         } else if (
-                clickedStack.is(
+                isOperational()
+                        && clickedStack.is(
                         MEKits.BLANK_ME_KIT_PATTERN.get()
                 )
         ) {
@@ -505,7 +598,8 @@ public class KitPatternEncoderMenu
                 return ItemStack.EMPTY;
             }
         } else if (
-                clickedStack.is(
+                isOperational()
+                        && clickedStack.is(
                         MEKits.ENCODED_ME_KIT_PATTERN.get()
                 )
         ) {
@@ -664,7 +758,41 @@ public class KitPatternEncoderMenu
         }
     }
 
-    private static final class GhostIngredientSlot
+    private final class EncoderSlot
+            extends SlotItemHandler {
+
+        private EncoderSlot(
+                @NotNull IItemHandler itemHandler,
+                int slot,
+                int x,
+                int y
+        ) {
+            super(
+                    itemHandler,
+                    slot,
+                    x,
+                    y
+            );
+        }
+
+        @Override
+        public boolean mayPlace(
+                @NotNull ItemStack stack
+        ) {
+            return isOperational()
+                    && super.mayPlace(stack);
+        }
+
+        @Override
+        public boolean mayPickup(
+                @NotNull Player player
+        ) {
+            return isOperational()
+                    && super.mayPickup(player);
+        }
+    }
+
+    private final class GhostIngredientSlot
             extends SlotItemHandler {
 
         private GhostIngredientSlot(

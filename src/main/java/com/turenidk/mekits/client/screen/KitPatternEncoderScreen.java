@@ -66,6 +66,10 @@ public class KitPatternEncoderScreen
 
     private EditBox kitNameField;
 
+    private Button encodeButton;
+
+    private Button clearButton;
+
     private boolean draggingScrollbar;
 
     /*
@@ -153,7 +157,7 @@ public class KitPatternEncoderScreen
                 kitNameField
         );
 
-        addRenderableWidget(
+        encodeButton =
                 Button.builder(
                                 Component.literal("↓"),
                                 button -> sendEncodeRequest()
@@ -171,10 +175,13 @@ public class KitPatternEncoderScreen
                                         )
                                 )
                         )
-                        .build()
-        );
+                        .build();
 
         addRenderableWidget(
+                encodeButton
+        );
+
+        clearButton =
                 Button.builder(
                                 Component.literal("×"),
                                 button -> sendClearRequest()
@@ -192,7 +199,10 @@ public class KitPatternEncoderScreen
                                         )
                                 )
                         )
-                        .build()
+                        .build();
+
+        addRenderableWidget(
+                clearButton
         );
 
         ItemStack initialEncodedPattern =
@@ -206,6 +216,8 @@ public class KitPatternEncoderScreen
                         initialEncodedPattern
                 );
 
+        updateControlState();
+
         setInitialFocus(
                 kitNameField
         );
@@ -214,6 +226,8 @@ public class KitPatternEncoderScreen
     @Override
     protected void containerTick() {
         super.containerTick();
+
+        updateControlState();
 
         if (kitNameField == null) {
             return;
@@ -257,6 +271,27 @@ public class KitPatternEncoderScreen
                 currentEncodedPatternName;
     }
 
+    private void updateControlState() {
+        boolean operational =
+                menu.isOperational();
+
+        if (kitNameField != null) {
+            kitNameField.setEditable(
+                    operational
+            );
+        }
+
+        if (encodeButton != null) {
+            encodeButton.active =
+                    operational;
+        }
+
+        if (clearButton != null) {
+            clearButton.active =
+                    operational;
+        }
+    }
+
     private @NotNull ItemStack getEncodedPatternStack() {
         int encodedPatternMenuSlot =
                 KitPatternEncoderLogic
@@ -295,6 +330,10 @@ public class KitPatternEncoderScreen
     private void sendKitNameUpdate(
             @NotNull String newKitName
     ) {
+        if (!menu.isOperational()) {
+            return;
+        }
+
         PacketDistributor.sendToServer(
                 new UpdateKitNamePayload(
                         newKitName
@@ -303,6 +342,10 @@ public class KitPatternEncoderScreen
     }
 
     private void sendClearRequest() {
+        if (!menu.isOperational()) {
+            return;
+        }
+
         if (kitNameField != null) {
             kitNameField.setValue(
                     ""
@@ -315,6 +358,10 @@ public class KitPatternEncoderScreen
     }
 
     private void sendEncodeRequest() {
+        if (!menu.isOperational()) {
+            return;
+        }
+
         if (kitNameField != null) {
             PacketDistributor.sendToServer(
                     new UpdateKitNamePayload(
@@ -331,6 +378,10 @@ public class KitPatternEncoderScreen
     private void selectIngredientPage(
             int requestedPage
     ) {
+        if (!menu.isOperational()) {
+            return;
+        }
+
         int validatedPage =
                 Math.max(
                         0,
@@ -421,6 +472,14 @@ public class KitPatternEncoderScreen
             int scanCode,
             int modifiers
     ) {
+        if (!menu.isOperational()) {
+            return super.keyPressed(
+                    keyCode,
+                    scanCode,
+                    modifiers
+            );
+        }
+
         if (
                 kitNameField != null
                         && kitNameField.isFocused()
@@ -459,6 +518,14 @@ public class KitPatternEncoderScreen
             double mouseY,
             int button
     ) {
+        if (!menu.isOperational()) {
+            return super.mouseClicked(
+                    mouseX,
+                    mouseY,
+                    button
+            );
+        }
+
         if (
                 button == 0
                         && isMouseOverScrollbar(
@@ -491,6 +558,16 @@ public class KitPatternEncoderScreen
             double dragX,
             double dragY
     ) {
+        if (!menu.isOperational()) {
+            return super.mouseDragged(
+                    mouseX,
+                    mouseY,
+                    button,
+                    dragX,
+                    dragY
+            );
+        }
+
         if (
                 button == 0
                         && draggingScrollbar
@@ -541,6 +618,15 @@ public class KitPatternEncoderScreen
             double scrollX,
             double scrollY
     ) {
+        if (!menu.isOperational()) {
+            return super.mouseScrolled(
+                    mouseX,
+                    mouseY,
+                    scrollX,
+                    scrollY
+            );
+        }
+
         if (
                 isMouseOverScrollbar(
                         mouseX,
@@ -1000,6 +1086,27 @@ public class KitPatternEncoderScreen
                 LABEL_COLOUR,
                 false
         );
+
+        if (!menu.isPowered()) {
+            Component outOfPower =
+                    Component.translatable(
+                            "screen.mekits.kit_pattern_encoder.out_of_power"
+                    );
+
+            guiGraphics.drawString(
+                    font,
+                    outOfPower,
+                    (
+                            imageWidth
+                                    - font.width(
+                                    outOfPower
+                            )
+                    ) / 2,
+                    117,
+                    0xFFFF5555,
+                    false
+            );
+        }
     }
 
     @Override

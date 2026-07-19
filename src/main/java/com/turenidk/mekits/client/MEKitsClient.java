@@ -1,7 +1,9 @@
 package com.turenidk.mekits.client;
 
+import appeng.api.parts.PartModels;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.client.screen.KitPatternEncoderScreen;
+import com.turenidk.mekits.part.KitPatternEncoderPart;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -17,6 +19,11 @@ public final class MEKitsClient {
     public MEKitsClient(
             @NotNull IEventBus modEventBus
     ) {
+        PartModels.registerModels(
+                KitPatternEncoderPart.MODEL_OFF,
+                KitPatternEncoderPart.MODEL_ON
+        );
+
         modEventBus.addListener(
                 MEKitsClient::registerMenuScreens
         );
