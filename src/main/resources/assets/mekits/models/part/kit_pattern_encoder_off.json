@@ -1,3 +1,8 @@
 {
-  "parent": "ae2:part/pattern_encoding_terminal_off"
+  "parent": "ae2:part/display_off",
+  "textures": {
+    "lightsBright": "mekits:part/kit_pattern_encoder_bright",
+    "lightsMedium": "ae2:part/pattern_encoding_terminal_medium",
+    "lightsDark": "mekits:part/kit_pattern_encoder_dark"
+  }
 }
