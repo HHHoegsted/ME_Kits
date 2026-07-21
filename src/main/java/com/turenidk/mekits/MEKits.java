@@ -14,6 +14,7 @@ import com.turenidk.mekits.item.EncodedMEKitPatternItem;
 import com.turenidk.mekits.item.MEKitItem;
 import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.menu.KitPatternEncoderMenu;
+import com.turenidk.mekits.menu.MEKitPackagerMenu;
 import com.turenidk.mekits.part.KitPatternEncoderPart;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -194,6 +195,30 @@ public class MEKits {
                                     ResourceLocation.fromNamespaceAndPath(
                                             MODID,
                                             "kit_pattern_encoder"
+                                    )
+                            )
+            );
+
+    public static final DeferredHolder<
+            MenuType<?>,
+            MenuType<MEKitPackagerMenu>
+            > ME_KIT_PACKAGER_MENU =
+            MENU_TYPES.register(
+                    "me_kit_packager",
+                    () -> MenuTypeBuilder
+                            .create(
+                                    MEKitPackagerMenu::new,
+                                    MEKitPackagerBlockEntity.class
+                            )
+                            .withMenuTitle(
+                                    host -> Component.translatable(
+                                            "menu.mekits.me_kit_packager"
+                                    )
+                            )
+                            .buildUnregistered(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "me_kit_packager"
                                     )
                             )
             );

@@ -332,50 +332,17 @@ public class MEKitPackagerBlockEntity extends BlockEntity
     }
 
     public ItemStack removeCapacityCard() {
-        int installedCards =
-                getInstalledCapacityCardCount();
-
-        if (installedCards <= 0) {
-            return ItemStack.EMPTY;
-        }
-
-        int capacityAfterRemoval =
-                Math.min(
-                        BASE_PATTERN_SLOT_COUNT
-                                + (installedCards - 1)
-                                * PATTERN_SLOTS_PER_CAPACITY_CARD,
-                        MAX_PATTERN_SLOT_COUNT
-                );
-
-        for (
-                int slot = capacityAfterRemoval;
-                slot < patternInventory.size();
-                slot++
-        ) {
-            if (!patternInventory.get(slot).isEmpty()) {
-                return ItemStack.EMPTY;
-            }
-        }
-
         for (
                 int slot = upgradeInventory.size() - 1;
                 slot >= 0;
                 slot--
         ) {
-            ItemStack upgradeStack =
-                    upgradeInventory.get(slot);
+            ItemStack removedStack =
+                    removeCapacityCardStack(slot);
 
-            if (!AEItems.CAPACITY_CARD.is(upgradeStack)) {
-                continue;
+            if (!removedStack.isEmpty()) {
+                return removedStack;
             }
-
-            upgradeInventory.set(
-                    slot,
-                    ItemStack.EMPTY
-            );
-
-            onUpgradeInventoryChanged();
-            return upgradeStack;
         }
 
         return ItemStack.EMPTY;
@@ -618,6 +585,204 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         }
 
         setChanged();
+    }
+
+    public ItemStack getPatternStack(
+            int slot
+    ) {
+        if (
+                slot < 0
+                        || slot >= patternInventory.size()
+        ) {
+            return ItemStack.EMPTY;
+        }
+
+        return patternInventory.get(slot);
+    }
+
+    public boolean canInsertPatternAt(
+            int slot,
+            ItemStack patternStack
+    ) {
+        return slot >= 0
+                && slot < getAccessiblePatternSlotCount()
+                && slot < patternInventory.size()
+                && patternInventory.get(slot).isEmpty()
+                && isValidEncodedPattern(patternStack);
+    }
+
+    public boolean setPatternStack(
+            int slot,
+            ItemStack patternStack
+    ) {
+        if (
+                slot < 0
+                        || slot >= patternInventory.size()
+        ) {
+            return false;
+        }
+
+        if (patternStack.isEmpty()) {
+            if (patternInventory.get(slot).isEmpty()) {
+                return false;
+            }
+
+            patternInventory.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+
+            onPatternInventoryChanged();
+            return true;
+        }
+
+        if (
+                slot >= getAccessiblePatternSlotCount()
+                        || !isValidEncodedPattern(patternStack)
+        ) {
+            return false;
+        }
+
+        patternInventory.set(
+                slot,
+                patternStack.copyWithCount(1)
+        );
+
+        onPatternInventoryChanged();
+        return true;
+    }
+
+    public ItemStack removePatternStack(
+            int slot
+    ) {
+        if (
+                slot < 0
+                        || slot >= patternInventory.size()
+        ) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack patternStack =
+                patternInventory.get(slot);
+
+        if (patternStack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        patternInventory.set(
+                slot,
+                ItemStack.EMPTY
+        );
+
+        onPatternInventoryChanged();
+        return patternStack;
+    }
+
+    public ItemStack getUpgradeStack(
+            int slot
+    ) {
+        if (
+                slot < 0
+                        || slot >= upgradeInventory.size()
+        ) {
+            return ItemStack.EMPTY;
+        }
+
+        return upgradeInventory.get(slot);
+    }
+
+    public boolean canInsertCapacityCardAt(
+            int slot,
+            ItemStack cardStack
+    ) {
+        return slot >= 0
+                && slot < upgradeInventory.size()
+                && upgradeInventory.get(slot).isEmpty()
+                && AEItems.CAPACITY_CARD.is(cardStack);
+    }
+
+    public boolean setCapacityCardStack(
+            int slot,
+            ItemStack cardStack
+    ) {
+        if (
+                slot < 0
+                        || slot >= upgradeInventory.size()
+        ) {
+            return false;
+        }
+
+        if (cardStack.isEmpty()) {
+            return removeCapacityCardStack(slot).isEmpty()
+                    == false;
+        }
+
+        if (!canInsertCapacityCardAt(slot, cardStack)) {
+            return false;
+        }
+
+        upgradeInventory.set(
+                slot,
+                cardStack.copyWithCount(1)
+        );
+
+        onUpgradeInventoryChanged();
+        return true;
+    }
+
+    public boolean canRemoveCapacityCardAt(
+            int upgradeSlot
+    ) {
+        if (
+                upgradeSlot < 0
+                        || upgradeSlot >= upgradeInventory.size()
+                        || !AEItems.CAPACITY_CARD.is(
+                        upgradeInventory.get(upgradeSlot)
+                )
+        ) {
+            return false;
+        }
+
+        int capacityAfterRemoval =
+                Math.min(
+                        BASE_PATTERN_SLOT_COUNT
+                                + (
+                                getInstalledCapacityCardCount() - 1
+                        )
+                                * PATTERN_SLOTS_PER_CAPACITY_CARD,
+                        MAX_PATTERN_SLOT_COUNT
+                );
+
+        for (
+                int patternSlot = capacityAfterRemoval;
+                patternSlot < patternInventory.size();
+                patternSlot++
+        ) {
+            if (!patternInventory.get(patternSlot).isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public ItemStack removeCapacityCardStack(
+            int slot
+    ) {
+        if (!canRemoveCapacityCardAt(slot)) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack cardStack =
+                upgradeInventory.get(slot);
+
+        upgradeInventory.set(
+                slot,
+                ItemStack.EMPTY
+        );
+
+        onUpgradeInventoryChanged();
+        return cardStack;
     }
 
     public IManagedGridNode getManagedGridNode() {

@@ -4,6 +4,7 @@ import appeng.api.parts.PartModels;
 import appeng.api.util.AEColor;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.client.screen.KitPatternEncoderScreen;
+import com.turenidk.mekits.client.screen.MEKitPackagerScreen;
 import com.turenidk.mekits.part.KitPatternEncoderPart;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -41,6 +42,11 @@ public final class MEKitsClient {
         event.register(
                 MEKits.KIT_PATTERN_ENCODER_MENU.get(),
                 KitPatternEncoderScreen::new
+        );
+
+        event.register(
+                MEKits.ME_KIT_PACKAGER_MENU.get(),
+                MEKitPackagerScreen::new
         );
     }
 

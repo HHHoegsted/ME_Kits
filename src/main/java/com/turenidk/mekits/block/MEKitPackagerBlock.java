@@ -1,6 +1,8 @@
 package com.turenidk.mekits.block;
 
 import appeng.core.definitions.AEItems;
+import appeng.menu.MenuOpener;
+import appeng.menu.locator.MenuLocators;
 import com.mojang.serialization.MapCodec;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
@@ -160,28 +162,16 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
         }
 
-        ItemStack removedStack;
+        boolean opened =
+                MenuOpener.open(
+                        MEKits.ME_KIT_PACKAGER_MENU.get(),
+                        player,
+                        MenuLocators.forBlockEntity(packager)
+                );
 
-        if (player.isShiftKeyDown()) {
-            removedStack =
-                    packager.removeCapacityCard();
-        } else {
-            removedStack =
-                    packager.removePattern();
-        }
-
-        if (removedStack.isEmpty()) {
-            return InteractionResult.PASS;
-        }
-
-        if (!player.addItem(removedStack)) {
-            player.drop(
-                    removedStack,
-                    false
-            );
-        }
-
-        return InteractionResult.SUCCESS;
+        return opened
+                ? InteractionResult.CONSUME
+                : InteractionResult.PASS;
     }
 
     @Override
