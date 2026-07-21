@@ -3,6 +3,7 @@
   "item.mekits.me_kit": "ME Kit",
   "item.mekits.blank_me_kit_pattern": "Blank ME Kit Pattern",
   "item.mekits.encoded_me_kit_pattern": "Encoded ME Kit Pattern",
+  "item.mekits.kit_pattern_encoder_part" : "Kit Pattern Encoder",
   "block.mekits.me_kit_packager": "ME Kit Packager",
   "block.mekits.kit_pattern_encoder": "Kit Pattern Encoder",
   "menu.mekits.kit_pattern_encoder": "Kit Pattern Encoder",
