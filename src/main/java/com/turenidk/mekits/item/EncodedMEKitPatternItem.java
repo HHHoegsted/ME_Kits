@@ -1,6 +1,8 @@
 package com.turenidk.mekits.item;
 
 import com.turenidk.mekits.MEKits;
+import com.turenidk.mekits.component.ModDataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -13,8 +15,32 @@ import net.minecraft.world.level.Level;
 
 public class EncodedMEKitPatternItem extends Item {
 
-    public EncodedMEKitPatternItem(Properties properties) {
+    public EncodedMEKitPatternItem(
+            Properties properties
+    ) {
         super(properties);
+    }
+
+    @Override
+    public Component getName(
+            ItemStack stack
+    ) {
+        String kitName =
+                stack.get(
+                        ModDataComponents.KIT_NAME.get()
+                );
+
+        if (
+                kitName == null
+                        || kitName.isBlank()
+        ) {
+            return super.getName(stack);
+        }
+
+        return Component.translatable(
+                "item.mekits.encoded_me_kit_pattern.named",
+                kitName
+        );
     }
 
     @Override
@@ -74,7 +100,10 @@ public class EncodedMEKitPatternItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        return clearPattern(stack, player)
+        return clearPattern(
+                stack,
+                player
+        )
                 ? InteractionResult.SUCCESS
                 : InteractionResult.FAIL;
     }

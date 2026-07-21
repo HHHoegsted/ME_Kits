@@ -11,6 +11,7 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.core.definitions.AEItems;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.crafting.MEKitPattern;
 import net.minecraft.core.BlockPos;
@@ -36,18 +37,29 @@ public class MEKitPackagerBlockEntity extends BlockEntity
     private static final String GRID_NODE_TAG = "grid_node";
     private static final String PENDING_OUTPUT_TAG = "pending_output";
     private static final String PATTERN_INVENTORY_TAG = "pattern_inventory";
+    private static final String UPGRADE_INVENTORY_TAG = "upgrade_inventory";
 
-    public static final int PATTERN_SLOT_COUNT = 9;
+    public static final int BASE_PATTERN_SLOT_COUNT = 9;
+    public static final int PATTERN_SLOTS_PER_CAPACITY_CARD = 9;
+    public static final int MAX_PATTERN_SLOT_COUNT = 27;
+    public static final int UPGRADE_SLOT_COUNT = 2;
 
     private final NonNullList<ItemStack> patternInventory =
             NonNullList.withSize(
-                    PATTERN_SLOT_COUNT,
+                    MAX_PATTERN_SLOT_COUNT,
+                    ItemStack.EMPTY
+            );
+
+    private final NonNullList<ItemStack> upgradeInventory =
+            NonNullList.withSize(
+                    UPGRADE_SLOT_COUNT,
                     ItemStack.EMPTY
             );
 
     private ItemStack pendingOutput = ItemStack.EMPTY;
 
-    private static final IGridNodeListener<MEKitPackagerBlockEntity> NODE_LISTENER =
+    private static final IGridNodeListener<MEKitPackagerBlockEntity>
+            NODE_LISTENER =
             new IGridNodeListener<>() {
                 @Override
                 public void onSaveChanges(
@@ -62,7 +74,10 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             new PackagerCraftingProvider(this);
 
     private final IManagedGridNode managedGridNode =
-            GridHelper.createManagedNode(this, NODE_LISTENER)
+            GridHelper.createManagedNode(
+                            this,
+                            NODE_LISTENER
+                    )
                     .setTagName(GRID_NODE_TAG)
                     .setInWorldNode(true)
                     .setIdlePowerUsage(1.0)
@@ -97,7 +112,10 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return;
         }
 
-        managedGridNode.create(level, worldPosition);
+        managedGridNode.create(
+                level,
+                worldPosition
+        );
     }
 
     @Override
@@ -111,11 +129,17 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             CompoundTag tag,
             HolderLookup.Provider registries
     ) {
-        super.saveAdditional(tag, registries);
+        super.saveAdditional(
+                tag,
+                registries
+        );
 
         CompoundTag nodeTag = new CompoundTag();
         managedGridNode.saveToNBT(nodeTag);
-        tag.put(GRID_NODE_TAG, nodeTag);
+        tag.put(
+                GRID_NODE_TAG,
+                nodeTag
+        );
 
         if (!pendingOutput.isEmpty()) {
             tag.put(
@@ -124,7 +148,8 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             );
         }
 
-        CompoundTag patternInventoryTag = new CompoundTag();
+        CompoundTag patternInventoryTag =
+                new CompoundTag();
 
         ContainerHelper.saveAllItems(
                 patternInventoryTag,
@@ -136,6 +161,20 @@ public class MEKitPackagerBlockEntity extends BlockEntity
                 PATTERN_INVENTORY_TAG,
                 patternInventoryTag
         );
+
+        CompoundTag upgradeInventoryTag =
+                new CompoundTag();
+
+        ContainerHelper.saveAllItems(
+                upgradeInventoryTag,
+                upgradeInventory,
+                registries
+        );
+
+        tag.put(
+                UPGRADE_INVENTORY_TAG,
+                upgradeInventoryTag
+        );
     }
 
     @Override
@@ -143,7 +182,10 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             CompoundTag tag,
             HolderLookup.Provider registries
     ) {
-        super.loadAdditional(tag, registries);
+        super.loadAdditional(
+                tag,
+                registries
+        );
 
         if (tag.contains(GRID_NODE_TAG)) {
             managedGridNode.loadFromNBT(
@@ -152,10 +194,13 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         }
 
         if (tag.contains(PENDING_OUTPUT_TAG)) {
-            pendingOutput = ItemStack.parseOptional(
-                    registries,
-                    tag.getCompound(PENDING_OUTPUT_TAG)
-            );
+            pendingOutput =
+                    ItemStack.parseOptional(
+                            registries,
+                            tag.getCompound(
+                                    PENDING_OUTPUT_TAG
+                            )
+                    );
         } else {
             pendingOutput = ItemStack.EMPTY;
         }
@@ -164,19 +209,59 @@ public class MEKitPackagerBlockEntity extends BlockEntity
 
         if (tag.contains(PATTERN_INVENTORY_TAG)) {
             ContainerHelper.loadAllItems(
-                    tag.getCompound(PATTERN_INVENTORY_TAG),
+                    tag.getCompound(
+                            PATTERN_INVENTORY_TAG
+                    ),
                     patternInventory,
+                    registries
+            );
+        }
+
+        upgradeInventory.clear();
+
+        if (tag.contains(UPGRADE_INVENTORY_TAG)) {
+            ContainerHelper.loadAllItems(
+                    tag.getCompound(
+                            UPGRADE_INVENTORY_TAG
+                    ),
+                    upgradeInventory,
                     registries
             );
         }
     }
 
-    public boolean insertPattern(ItemStack patternStack) {
+    public int getInstalledCapacityCardCount() {
+        int installedCards = 0;
+
+        for (ItemStack upgradeStack : upgradeInventory) {
+            if (AEItems.CAPACITY_CARD.is(upgradeStack)) {
+                installedCards++;
+            }
+        }
+
+        return installedCards;
+    }
+
+    public int getAccessiblePatternSlotCount() {
+        return Math.min(
+                BASE_PATTERN_SLOT_COUNT
+                        + getInstalledCapacityCardCount()
+                        * PATTERN_SLOTS_PER_CAPACITY_CARD,
+                MAX_PATTERN_SLOT_COUNT
+        );
+    }
+
+    public boolean insertPattern(
+            ItemStack patternStack
+    ) {
         if (!isValidEncodedPattern(patternStack)) {
             return false;
         }
 
-        for (int slot = 0; slot < patternInventory.size(); slot++) {
+        int accessibleSlots =
+                getAccessiblePatternSlotCount();
+
+        for (int slot = 0; slot < accessibleSlots; slot++) {
             if (!patternInventory.get(slot).isEmpty()) {
                 continue;
             }
@@ -187,7 +272,6 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             );
 
             onPatternInventoryChanged();
-
             return true;
         }
 
@@ -213,8 +297,85 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             );
 
             onPatternInventoryChanged();
-
             return patternStack;
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    public boolean insertCapacityCard(
+            ItemStack cardStack
+    ) {
+        if (!AEItems.CAPACITY_CARD.is(cardStack)) {
+            return false;
+        }
+
+        for (
+                int slot = 0;
+                slot < upgradeInventory.size();
+                slot++
+        ) {
+            if (!upgradeInventory.get(slot).isEmpty()) {
+                continue;
+            }
+
+            upgradeInventory.set(
+                    slot,
+                    cardStack.copyWithCount(1)
+            );
+
+            onUpgradeInventoryChanged();
+            return true;
+        }
+
+        return false;
+    }
+
+    public ItemStack removeCapacityCard() {
+        int installedCards =
+                getInstalledCapacityCardCount();
+
+        if (installedCards <= 0) {
+            return ItemStack.EMPTY;
+        }
+
+        int capacityAfterRemoval =
+                Math.min(
+                        BASE_PATTERN_SLOT_COUNT
+                                + (installedCards - 1)
+                                * PATTERN_SLOTS_PER_CAPACITY_CARD,
+                        MAX_PATTERN_SLOT_COUNT
+                );
+
+        for (
+                int slot = capacityAfterRemoval;
+                slot < patternInventory.size();
+                slot++
+        ) {
+            if (!patternInventory.get(slot).isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+        }
+
+        for (
+                int slot = upgradeInventory.size() - 1;
+                slot >= 0;
+                slot--
+        ) {
+            ItemStack upgradeStack =
+                    upgradeInventory.get(slot);
+
+            if (!AEItems.CAPACITY_CARD.is(upgradeStack)) {
+                continue;
+            }
+
+            upgradeInventory.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+
+            onUpgradeInventoryChanged();
+            return upgradeStack;
         }
 
         return ItemStack.EMPTY;
@@ -224,7 +385,11 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         List<ItemStack> removedPatterns =
                 new ArrayList<>();
 
-        for (int slot = 0; slot < patternInventory.size(); slot++) {
+        for (
+                int slot = 0;
+                slot < patternInventory.size();
+                slot++
+        ) {
             ItemStack patternStack =
                     patternInventory.get(slot);
 
@@ -233,6 +398,7 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             }
 
             removedPatterns.add(patternStack);
+
             patternInventory.set(
                     slot,
                     ItemStack.EMPTY
@@ -246,11 +412,48 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         return removedPatterns;
     }
 
+    public List<ItemStack> takeUpgradeInventory() {
+        List<ItemStack> removedUpgrades =
+                new ArrayList<>();
+
+        for (
+                int slot = 0;
+                slot < upgradeInventory.size();
+                slot++
+        ) {
+            ItemStack upgradeStack =
+                    upgradeInventory.get(slot);
+
+            if (upgradeStack.isEmpty()) {
+                continue;
+            }
+
+            removedUpgrades.add(upgradeStack);
+
+            upgradeInventory.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+        }
+
+        if (!removedUpgrades.isEmpty()) {
+            onUpgradeInventoryChanged();
+        }
+
+        return removedUpgrades;
+    }
+
     public List<IPatternDetails> getAvailablePatterns() {
         Set<IPatternDetails> availablePatterns =
                 new LinkedHashSet<>();
 
-        for (ItemStack patternStack : patternInventory) {
+        int accessibleSlots =
+                getAccessiblePatternSlotCount();
+
+        for (int slot = 0; slot < accessibleSlots; slot++) {
+            ItemStack patternStack =
+                    patternInventory.get(slot);
+
             if (patternStack.isEmpty()) {
                 continue;
             }
@@ -275,7 +478,9 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             }
         }
 
-        return List.copyOf(availablePatterns);
+        return List.copyOf(
+                availablePatterns
+        );
     }
 
     private boolean isValidEncodedPattern(
@@ -313,7 +518,17 @@ public class MEKitPackagerBlockEntity extends BlockEntity
         );
     }
 
-    public boolean queueOutput(ItemStack outputStack) {
+    private void onUpgradeInventoryChanged() {
+        setChanged();
+
+        ICraftingProvider.requestUpdate(
+                managedGridNode
+        );
+    }
+
+    public boolean queueOutput(
+            ItemStack outputStack
+    ) {
         if (
                 outputStack.isEmpty()
                         || !pendingOutput.isEmpty()
@@ -321,9 +536,10 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return false;
         }
 
-        pendingOutput = outputStack.copy();
-        setChanged();
+        pendingOutput =
+                outputStack.copy();
 
+        setChanged();
         return true;
     }
 
@@ -336,10 +552,13 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return ItemStack.EMPTY;
         }
 
-        ItemStack outputStack = pendingOutput;
-        pendingOutput = ItemStack.EMPTY;
-        setChanged();
+        ItemStack outputStack =
+                pendingOutput;
 
+        pendingOutput =
+                ItemStack.EMPTY;
+
+        setChanged();
         return outputStack;
     }
 
@@ -361,7 +580,8 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return;
         }
 
-        var grid = managedGridNode.getGrid();
+        var grid =
+                managedGridNode.getGrid();
 
         if (grid == null) {
             return;
@@ -374,24 +594,27 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return;
         }
 
-        long inserted = grid
-                .getStorageService()
-                .getInventory()
-                .insert(
-                        outputKey,
-                        pendingOutput.getCount(),
-                        Actionable.MODULATE,
-                        IActionSource.ofMachine(this)
-                );
+        long inserted =
+                grid.getStorageService()
+                        .getInventory()
+                        .insert(
+                                outputKey,
+                                pendingOutput.getCount(),
+                                Actionable.MODULATE,
+                                IActionSource.ofMachine(this)
+                        );
 
         if (inserted <= 0) {
             return;
         }
 
-        pendingOutput.shrink((int) inserted);
+        pendingOutput.shrink(
+                (int) inserted
+        );
 
         if (pendingOutput.isEmpty()) {
-            pendingOutput = ItemStack.EMPTY;
+            pendingOutput =
+                    ItemStack.EMPTY;
         }
 
         setChanged();
@@ -409,7 +632,9 @@ public class MEKitPackagerBlockEntity extends BlockEntity
 
     @Nullable
     @Override
-    public IGridNode getGridNode(Direction direction) {
+    public IGridNode getGridNode(
+            Direction direction
+    ) {
         return managedGridNode.getNode();
     }
 }

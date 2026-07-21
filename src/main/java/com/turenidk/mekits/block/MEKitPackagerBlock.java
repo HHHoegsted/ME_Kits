@@ -1,5 +1,6 @@
 package com.turenidk.mekits.block;
 
+import appeng.core.definitions.AEItems;
 import com.mojang.serialization.MapCodec;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
@@ -22,9 +23,13 @@ import org.jetbrains.annotations.Nullable;
 public class MEKitPackagerBlock extends BaseEntityBlock {
 
     public static final MapCodec<MEKitPackagerBlock> CODEC =
-            simpleCodec(MEKitPackagerBlock::new);
+            simpleCodec(
+                    MEKitPackagerBlock::new
+            );
 
-    public MEKitPackagerBlock(Properties properties) {
+    public MEKitPackagerBlock(
+            Properties properties
+    ) {
         super(properties);
     }
 
@@ -34,7 +39,9 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
+    public RenderShape getRenderShape(
+            BlockState state
+    ) {
         return RenderShape.MODEL;
     }
 
@@ -44,13 +51,18 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
             BlockPos blockPos,
             BlockState blockState
     ) {
-        return MEKits.ME_KIT_PACKAGER_BLOCK_ENTITY.get()
-                .create(blockPos, blockState);
+        return MEKits.ME_KIT_PACKAGER_BLOCK_ENTITY
+                .get()
+                .create(
+                        blockPos,
+                        blockState
+                );
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+    public <T extends BlockEntity>
+    BlockEntityTicker<T> getTicker(
             Level level,
             BlockState blockState,
             BlockEntityType<T> blockEntityType
@@ -76,8 +88,19 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
             InteractionHand interactionHand,
             BlockHitResult hitResult
     ) {
-        if (!heldStack.is(MEKits.ENCODED_ME_KIT_PATTERN.get())) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        boolean isCapacityCard =
+                AEItems.CAPACITY_CARD.is(
+                        heldStack
+                );
+
+        boolean isEncodedPattern =
+                heldStack.is(
+                        MEKits.ENCODED_ME_KIT_PATTERN.get()
+                );
+
+        if (!isCapacityCard && !isEncodedPattern) {
+            return ItemInteractionResult
+                    .PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         if (level.isClientSide()) {
@@ -87,11 +110,26 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
         BlockEntity blockEntity =
                 level.getBlockEntity(blockPos);
 
-        if (!(blockEntity instanceof MEKitPackagerBlockEntity packager)) {
+        if (!(blockEntity
+                instanceof MEKitPackagerBlockEntity packager)) {
             return ItemInteractionResult.FAIL;
         }
 
-        if (!packager.insertPattern(heldStack)) {
+        boolean inserted;
+
+        if (isCapacityCard) {
+            inserted =
+                    packager.insertCapacityCard(
+                            heldStack
+                    );
+        } else {
+            inserted =
+                    packager.insertPattern(
+                            heldStack
+                    );
+        }
+
+        if (!inserted) {
             return ItemInteractionResult.FAIL;
         }
 
@@ -117,20 +155,28 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
         BlockEntity blockEntity =
                 level.getBlockEntity(blockPos);
 
-        if (!(blockEntity instanceof MEKitPackagerBlockEntity packager)) {
+        if (!(blockEntity
+                instanceof MEKitPackagerBlockEntity packager)) {
             return InteractionResult.PASS;
         }
 
-        ItemStack removedPattern =
-                packager.removePattern();
+        ItemStack removedStack;
 
-        if (removedPattern.isEmpty()) {
+        if (player.isShiftKeyDown()) {
+            removedStack =
+                    packager.removeCapacityCard();
+        } else {
+            removedStack =
+                    packager.removePattern();
+        }
+
+        if (removedStack.isEmpty()) {
             return InteractionResult.PASS;
         }
 
-        if (!player.addItem(removedPattern)) {
+        if (!player.addItem(removedStack)) {
             player.drop(
-                    removedPattern,
+                    removedStack,
                     false
             );
         }
@@ -154,7 +200,8 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
             BlockEntity blockEntity =
                     level.getBlockEntity(blockPos);
 
-            if (blockEntity instanceof MEKitPackagerBlockEntity packager) {
+            if (blockEntity
+                    instanceof MEKitPackagerBlockEntity packager) {
                 ItemStack pendingOutput =
                         packager.takePendingOutput();
 
@@ -174,6 +221,17 @@ public class MEKitPackagerBlock extends BaseEntityBlock {
                             level,
                             blockPos,
                             patternStack
+                    );
+                }
+
+                for (
+                        ItemStack upgradeStack
+                        : packager.takeUpgradeInventory()
+                ) {
+                    popResource(
+                            level,
+                            blockPos,
+                            upgradeStack
                     );
                 }
             }
