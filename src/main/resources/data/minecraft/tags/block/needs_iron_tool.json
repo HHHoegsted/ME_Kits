@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "mekits:me_kit_packager",
-    "mekits:kit_pattern_encoder"
+    "mekits:me_kit_packager"
   ]
 }
