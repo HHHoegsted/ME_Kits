@@ -26,5 +26,6 @@
   "message.mekits.encoder.invalid_contents": "The kit contains an invalid item definition",
   "message.mekits.encoder.internal_error": "The pattern could not be encoded",
   "message.mekits.encoder_offline": "Kit Pattern Encoder is offline",
-  "screen.mekits.kit_pattern_encoder.out_of_power": "Out of Power"
+  "screen.mekits.kit_pattern_encoder.out_of_power": "Out of Power",
+  "screen.mekits.me_kit_packager.accepts_upgrade": "Accepts: %s"
 }

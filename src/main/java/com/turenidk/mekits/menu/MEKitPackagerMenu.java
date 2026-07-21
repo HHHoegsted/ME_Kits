@@ -2,6 +2,7 @@ package com.turenidk.mekits.menu;
 
 import appeng.core.definitions.AEItems;
 import appeng.menu.AEBaseMenu;
+import appeng.menu.SlotSemantics;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.blockentity.MEKitPackagerBlockEntity;
 import net.minecraft.world.SimpleContainer;
@@ -50,8 +51,9 @@ public class MEKitPackagerMenu extends AEBaseMenu {
 
         addPatternSlots();
         addUpgradeSlots();
-        addPlayerInventory(playerInventory);
-        addPlayerHotbar(playerInventory);
+        createPlayerInventorySlots(
+                playerInventory
+        );
 
         addDataSlot(
                 accessiblePatternSlots
@@ -71,7 +73,9 @@ public class MEKitPackagerMenu extends AEBaseMenu {
     }
 
     private boolean isClientMenu() {
-        return getPlayer().level().isClientSide();
+        return getPlayer()
+                .level()
+                .isClientSide();
     }
 
     private void updateAccessiblePatternSlots() {
@@ -93,19 +97,18 @@ public class MEKitPackagerMenu extends AEBaseMenu {
     }
 
     private void addPatternSlots() {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                int patternSlot =
-                        column + row * 9;
-
-                addSlot(
-                        new PatternSlot(
-                                patternSlot,
-                                8 + column * 18,
-                                34 + row * 18
-                        )
-                );
-            }
+        for (
+                int patternSlot = 0;
+                patternSlot
+                        < MEKitPackagerBlockEntity.MAX_PATTERN_SLOT_COUNT;
+                patternSlot++
+        ) {
+            addSlot(
+                    new PatternSlot(
+                            patternSlot
+                    ),
+                    SlotSemantics.ENCODED_PATTERN
+            );
         }
     }
 
@@ -118,42 +121,9 @@ public class MEKitPackagerMenu extends AEBaseMenu {
         ) {
             addSlot(
                     new CapacityCardSlot(
-                            upgradeSlot,
-                            174,
-                            34 + upgradeSlot * 18
-                    )
-            );
-        }
-    }
-
-    private void addPlayerInventory(
-            @NotNull Inventory playerInventory
-    ) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(
-                        new Slot(
-                                playerInventory,
-                                column + row * 9 + 9,
-                                8 + column * 18,
-                                106 + row * 18
-                        )
-                );
-            }
-        }
-    }
-
-    private void addPlayerHotbar(
-            @NotNull Inventory playerInventory
-    ) {
-        for (int column = 0; column < 9; column++) {
-            addSlot(
-                    new Slot(
-                            playerInventory,
-                            column,
-                            8 + column * 18,
-                            164
-                    )
+                            upgradeSlot
+                    ),
+                    SlotSemantics.UPGRADE
             );
         }
     }
@@ -163,15 +133,13 @@ public class MEKitPackagerMenu extends AEBaseMenu {
         private final int machineSlot;
 
         private PatternSlot(
-                int machineSlot,
-                int x,
-                int y
+                int machineSlot
         ) {
             super(
                     new SimpleContainer(1),
                     0,
-                    x,
-                    y
+                    0,
+                    0
             );
 
             this.machineSlot = machineSlot;
@@ -198,18 +166,14 @@ public class MEKitPackagerMenu extends AEBaseMenu {
                 @NotNull ItemStack stack
         ) {
             if (isClientMenu()) {
-                return menuSlotIsUnlocked();
+                return machineSlot
+                        < getAccessiblePatternSlotCount();
             }
 
             return packager.canInsertPatternAt(
                     machineSlot,
                     stack
             );
-        }
-
-        private boolean menuSlotIsUnlocked() {
-            return machineSlot
-                    < getAccessiblePatternSlotCount();
         }
 
         @Override
@@ -276,15 +240,13 @@ public class MEKitPackagerMenu extends AEBaseMenu {
         private final int machineSlot;
 
         private CapacityCardSlot(
-                int machineSlot,
-                int x,
-                int y
+                int machineSlot
         ) {
             super(
                     new SimpleContainer(1),
                     0,
-                    x,
-                    y
+                    0,
+                    0
             );
 
             this.machineSlot = machineSlot;
@@ -311,11 +273,14 @@ public class MEKitPackagerMenu extends AEBaseMenu {
                 @NotNull ItemStack stack
         ) {
             if (isClientMenu()) {
-                return AEItems.CAPACITY_CARD.is(stack);
+                return AEItems.CAPACITY_CARD.is(
+                        stack
+                );
             }
 
-            return AEItems.CAPACITY_CARD.is(stack)
-                    && packager.canInsertCapacityCardAt(
+            return AEItems.CAPACITY_CARD.is(
+                    stack
+            ) && packager.canInsertCapacityCardAt(
                     machineSlot,
                     stack
             );

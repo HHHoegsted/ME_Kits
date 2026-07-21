@@ -1,0 +1,59 @@
+{
+  "$schema": "schema.json",
+  "includes": [
+    "common/common.json"
+  ],
+  "background": {
+    "texture": "guis/me_kit_packager.png",
+    "textureWidth": 204,
+    "textureHeight": 200,
+    "srcRect": [
+      0,
+      0,
+      204,
+      200
+    ]
+  },
+  "slots": {
+    "ENCODED_PATTERN": {
+      "left": 8,
+      "top": 30,
+      "grid": "BREAK_AFTER_9COLS"
+    },
+    "UPGRADE": {
+      "left": 181,
+      "top": 8,
+      "grid": "VERTICAL"
+    },
+    "PLAYER_INVENTORY": {
+      "left": 8,
+      "top": 112,
+      "grid": "BREAK_AFTER_9COLS"
+    },
+    "PLAYER_HOTBAR": {
+      "left": 8,
+      "top": 172,
+      "grid": "HORIZONTAL"
+    }
+  },
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "menu.mekits.me_kit_packager"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    },
+    "player_inventory_title": {
+      "text": {
+        "translate": "container.inventory"
+      },
+      "position": {
+        "left": 8,
+        "top": 99
+      }
+    }
+  }
+}
