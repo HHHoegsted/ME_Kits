@@ -2,26 +2,23 @@ package com.turenidk.mekits.part;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
-import appeng.parts.reporting.AbstractDisplayPart;
+import appeng.parts.reporting.AbstractTerminalPart;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.logic.KitPatternEncoderLogic;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public final class KitPatternEncoderPart
-        extends AbstractDisplayPart
+        extends AbstractTerminalPart
         implements KitPatternEncoderHost {
 
     private static final String ENCODER_LOGIC_TAG =
@@ -69,8 +66,7 @@ public final class KitPatternEncoderPart
             @NotNull IPartItem<?> partItem
     ) {
         super(
-                partItem,
-                true
+                partItem
         );
     }
 
@@ -100,55 +96,10 @@ public final class KitPatternEncoderPart
     }
 
     @Override
-    public boolean onUseWithoutItem(
-            @NotNull Player player,
-            @NotNull Vec3 position
+    public MenuType<?> getMenuType(
+            @NotNull Player player
     ) {
-        boolean handledByBase =
-                super.onUseWithoutItem(
-                        player,
-                        position
-                );
-
-        if (handledByBase) {
-            return true;
-        }
-
-        if (player.level().isClientSide()) {
-            return true;
-        }
-
-        /*
-         * A powered-but-inactive node has no channel. In that state,
-         * preserve the existing offline action-bar message and do not
-         * open the menu.
-         *
-         * An unpowered node is allowed to open the menu so the screen
-         * can present AE2-style "Out of Power" feedback.
-         */
-        if (
-                isEncoderPowered()
-                        && !isEncoderActive()
-        ) {
-            player.displayClientMessage(
-                    Component.translatable(
-                            "message.mekits.encoder_offline"
-                    ),
-                    true
-            );
-
-            return true;
-        }
-
-        MenuOpener.open(
-                MEKits.KIT_PATTERN_ENCODER_MENU.get(),
-                player,
-                MenuLocators.forPart(
-                        this
-                )
-        );
-
-        return true;
+        return MEKits.KIT_PATTERN_ENCODER_MENU.get();
     }
 
     @Override

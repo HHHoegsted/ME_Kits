@@ -597,7 +597,14 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return ItemStack.EMPTY;
         }
 
-        return patternInventory.get(slot);
+        ItemStack patternStack =
+                patternInventory.get(
+                        slot
+                );
+
+        return patternStack.isEmpty()
+                ? ItemStack.EMPTY
+                : patternStack.copy();
     }
 
     public boolean canInsertPatternAt(
@@ -688,7 +695,14 @@ public class MEKitPackagerBlockEntity extends BlockEntity
             return ItemStack.EMPTY;
         }
 
-        return upgradeInventory.get(slot);
+        ItemStack upgradeStack =
+                upgradeInventory.get(
+                        slot
+                );
+
+        return upgradeStack.isEmpty()
+                ? ItemStack.EMPTY
+                : upgradeStack.copy();
     }
 
     public boolean canInsertCapacityCardAt(

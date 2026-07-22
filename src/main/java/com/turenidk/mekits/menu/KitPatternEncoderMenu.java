@@ -1,6 +1,7 @@
 package com.turenidk.mekits.menu;
 
-import appeng.menu.AEBaseMenu;
+import appeng.menu.SlotSemantics;
+import appeng.menu.me.common.MEStorageMenu;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.logic.KitPatternEncoderHost;
 import com.turenidk.mekits.logic.KitPatternEncoderLogic;
@@ -17,13 +18,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KitPatternEncoderMenu
-        extends AEBaseMenu {
+        extends MEStorageMenu {
 
-    public static final int MAX_KIT_NAME_LENGTH = 64;
+    public static final int MAX_KIT_NAME_LENGTH =
+            64;
 
-    public static final int VISIBLE_INGREDIENT_SLOT_COUNT = 9;
+    public static final int VISIBLE_INGREDIENT_SLOT_COUNT =
+            9;
 
-    public static final int INGREDIENT_PAGE_STRIDE = 3;
+    public static final int INGREDIENT_PAGE_STRIDE =
+            3;
 
     public static final int INGREDIENT_PAGE_COUNT =
             (
@@ -33,7 +37,8 @@ public class KitPatternEncoderMenu
                     / INGREDIENT_PAGE_STRIDE
                     + 1;
 
-    private static final int ENCODER_SLOT_COUNT = 2;
+    private static final int ENCODER_SLOT_COUNT =
+            2;
 
     private static final int GHOST_SLOT_START =
             ENCODER_SLOT_COUNT;
@@ -46,13 +51,15 @@ public class KitPatternEncoderMenu
             GHOST_SLOT_END;
 
     private static final int PLAYER_INVENTORY_END =
-            PLAYER_INVENTORY_START + 27;
+            PLAYER_INVENTORY_START
+                    + 27;
 
     private static final int HOTBAR_START =
             PLAYER_INVENTORY_END;
 
     private static final int HOTBAR_END =
-            HOTBAR_START + 9;
+            HOTBAR_START
+                    + 9;
 
     @NotNull
     private final KitPatternEncoderHost host;
@@ -81,10 +88,12 @@ public class KitPatternEncoderMenu
                 MEKits.KIT_PATTERN_ENCODER_MENU.get(),
                 containerId,
                 playerInventory,
-                host
+                host,
+                false
         );
 
-        this.host = host;
+        this.host =
+                host;
 
         this.encoderLogic =
                 host.getEncoderLogic();
@@ -111,11 +120,7 @@ public class KitPatternEncoderMenu
                 )
         );
 
-        addPlayerInventory(
-                playerInventory
-        );
-
-        addPlayerHotbar(
+        createPlayerInventorySlots(
                 playerInventory
         );
 
@@ -130,6 +135,20 @@ public class KitPatternEncoderMenu
         addDataSlot(
                 activeState
         );
+    }
+
+    /*
+     * The final terminal may expose view-cell slots, but they must not
+     * be inserted ahead of the existing Encoder slots during this
+     * architecture step.
+     *
+     * The Encoder's current click and quick-move rules deliberately
+     * depend on the two pattern slots and nine definition slots being
+     * the first eleven menu slots.
+     */
+    @Override
+    protected boolean hideViewCells() {
+        return true;
     }
 
     private static @NotNull IItemHandlerModifiable
@@ -162,11 +181,13 @@ public class KitPatternEncoderMenu
     }
 
     public boolean isPowered() {
-        return poweredState.get() != 0;
+        return poweredState.get()
+                != 0;
     }
 
     public boolean isOperational() {
-        return activeState.get() != 0;
+        return activeState.get()
+                != 0;
     }
 
     private void updateOperationalState() {
@@ -218,7 +239,8 @@ public class KitPatternEncoderMenu
                 0,
                 Math.min(
                         requestedPage,
-                        INGREDIENT_PAGE_COUNT - 1
+                        INGREDIENT_PAGE_COUNT
+                                - 1
                 )
         );
     }
@@ -228,7 +250,8 @@ public class KitPatternEncoderMenu
     ) {
         return clampIngredientPage(
                 page
-        ) * INGREDIENT_PAGE_STRIDE;
+        )
+                * INGREDIENT_PAGE_STRIDE;
     }
 
     private int getDefinitionSlotForVisibleSlot(
@@ -244,7 +267,8 @@ public class KitPatternEncoderMenu
 
         return getFirstDefinitionSlotForPage(
                 getIngredientPage()
-        ) + visibleSlot;
+        )
+                + visibleSlot;
     }
 
     @Override
@@ -258,7 +282,8 @@ public class KitPatternEncoderMenu
 
         if (
                 buttonId < 0
-                        || buttonId >= INGREDIENT_PAGE_COUNT
+                        || buttonId
+                        >= INGREDIENT_PAGE_COUNT
         ) {
             return false;
         }
@@ -294,7 +319,8 @@ public class KitPatternEncoderMenu
 
         if (
                 menuSlotIndex < GHOST_SLOT_START
-                        || menuSlotIndex >= GHOST_SLOT_END
+                        || menuSlotIndex
+                        >= GHOST_SLOT_END
         ) {
             return -1;
         }
@@ -368,7 +394,9 @@ public class KitPatternEncoderMenu
     public @NotNull KitPatternEncoderLogic.EncodeResult
     encodePattern() {
         if (!isOperational()) {
-            return KitPatternEncoderLogic.EncodeResult.INTERNAL_ERROR;
+            return KitPatternEncoderLogic
+                    .EncodeResult
+                    .INTERNAL_ERROR;
         }
 
         return encoderLogic.encodePattern();
@@ -380,73 +408,38 @@ public class KitPatternEncoderMenu
         addSlot(
                 new EncoderSlot(
                         patternItemHandler,
-                        KitPatternEncoderLogic.BLANK_PATTERN_SLOT,
-                        145,
-                        49
-                )
+                        KitPatternEncoderLogic
+                                .BLANK_PATTERN_SLOT
+                ),
+                SlotSemantics.BLANK_PATTERN
         );
 
         addSlot(
                 new EncoderSlot(
                         patternItemHandler,
-                        KitPatternEncoderLogic.ENCODED_PATTERN_SLOT,
-                        145,
-                        93
-                )
+                        KitPatternEncoderLogic
+                                .ENCODED_PATTERN_SLOT
+                ),
+                SlotSemantics.ENCODED_PATTERN
         );
     }
 
     private void addGhostIngredientSlots(
-            @NotNull IItemHandlerModifiable pagedIngredientHandler
+            @NotNull IItemHandlerModifiable
+                    pagedIngredientHandler
     ) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 3; column++) {
-                int visibleSlot =
-                        column
-                                + row * 3;
-
-                addSlot(
-                        new GhostIngredientSlot(
-                                pagedIngredientHandler,
-                                visibleSlot,
-                                41 + column * 18,
-                                55 + row * 18
-                        )
-                );
-            }
-        }
-    }
-
-    private void addPlayerInventory(
-            @NotNull Inventory playerInventory
-    ) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(
-                        new Slot(
-                                playerInventory,
-                                column
-                                        + row * 9
-                                        + 9,
-                                8 + column * 18,
-                                143 + row * 18
-                        )
-                );
-            }
-        }
-    }
-
-    private void addPlayerHotbar(
-            @NotNull Inventory playerInventory
-    ) {
-        for (int column = 0; column < 9; column++) {
+        for (
+                int visibleSlot = 0;
+                visibleSlot
+                        < VISIBLE_INGREDIENT_SLOT_COUNT;
+                visibleSlot++
+        ) {
             addSlot(
-                    new Slot(
-                            playerInventory,
-                            column,
-                            8 + column * 18,
-                            201
-                    )
+                    new GhostIngredientSlot(
+                            pagedIngredientHandler,
+                            visibleSlot
+                    ),
+                    SlotSemantics.PROCESSING_INPUTS
             );
         }
     }
@@ -514,6 +507,7 @@ public class KitPatternEncoderMenu
             }
 
             broadcastChanges();
+
             return;
         }
 
@@ -532,21 +526,24 @@ public class KitPatternEncoderMenu
     ) {
         if (
                 clickedSlotIndex < 0
-                        || clickedSlotIndex >= slots.size()
+                        || clickedSlotIndex
+                        >= slots.size()
         ) {
             return ItemStack.EMPTY;
         }
 
         if (
                 !isOperational()
-                        && clickedSlotIndex < GHOST_SLOT_END
+                        && clickedSlotIndex
+                        < GHOST_SLOT_END
         ) {
             return ItemStack.EMPTY;
         }
 
         if (
                 clickedSlotIndex >= GHOST_SLOT_START
-                        && clickedSlotIndex < GHOST_SLOT_END
+                        && clickedSlotIndex
+                        < GHOST_SLOT_END
         ) {
             return ItemStack.EMPTY;
         }
@@ -589,8 +586,10 @@ public class KitPatternEncoderMenu
             if (
                     !moveItemStackTo(
                             clickedStack,
-                            KitPatternEncoderLogic.BLANK_PATTERN_SLOT,
-                            KitPatternEncoderLogic.BLANK_PATTERN_SLOT
+                            KitPatternEncoderLogic
+                                    .BLANK_PATTERN_SLOT,
+                            KitPatternEncoderLogic
+                                    .BLANK_PATTERN_SLOT
                                     + 1,
                             false
                     )
@@ -606,8 +605,10 @@ public class KitPatternEncoderMenu
             if (
                     !moveItemStackTo(
                             clickedStack,
-                            KitPatternEncoderLogic.ENCODED_PATTERN_SLOT,
-                            KitPatternEncoderLogic.ENCODED_PATTERN_SLOT
+                            KitPatternEncoderLogic
+                                    .ENCODED_PATTERN_SLOT,
+                            KitPatternEncoderLogic
+                                    .ENCODED_PATTERN_SLOT
                                     + 1,
                             false
                     )
@@ -665,10 +666,13 @@ public class KitPatternEncoderMenu
     private final class PagedIngredientHandler
             implements IItemHandlerModifiable {
 
-        private final IItemHandlerModifiable backingHandler;
+        @NotNull
+        private final IItemHandlerModifiable
+                backingHandler;
 
         private PagedIngredientHandler(
-                @NotNull IItemHandlerModifiable backingHandler
+                @NotNull IItemHandlerModifiable
+                        backingHandler
         ) {
             this.backingHandler =
                     backingHandler;
@@ -703,7 +707,9 @@ public class KitPatternEncoderMenu
                 @NotNull ItemStack stack
         ) {
             backingHandler.setStackInSlot(
-                    getBackingSlot(slot),
+                    getBackingSlot(
+                            slot
+                    ),
                     stack
             );
         }
@@ -718,7 +724,9 @@ public class KitPatternEncoderMenu
                 int slot
         ) {
             return backingHandler.getStackInSlot(
-                    getBackingSlot(slot)
+                    getBackingSlot(
+                            slot
+                    )
             );
         }
 
@@ -745,7 +753,9 @@ public class KitPatternEncoderMenu
                 int slot
         ) {
             return backingHandler.getSlotLimit(
-                    getBackingSlot(slot)
+                    getBackingSlot(
+                            slot
+                    )
             );
         }
 
@@ -763,15 +773,13 @@ public class KitPatternEncoderMenu
 
         private EncoderSlot(
                 @NotNull IItemHandler itemHandler,
-                int slot,
-                int x,
-                int y
+                int slot
         ) {
             super(
                     itemHandler,
                     slot,
-                    x,
-                    y
+                    0,
+                    0
             );
         }
 
@@ -780,7 +788,9 @@ public class KitPatternEncoderMenu
                 @NotNull ItemStack stack
         ) {
             return isOperational()
-                    && super.mayPlace(stack);
+                    && super.mayPlace(
+                    stack
+            );
         }
 
         @Override
@@ -788,7 +798,9 @@ public class KitPatternEncoderMenu
                 @NotNull Player player
         ) {
             return isOperational()
-                    && super.mayPickup(player);
+                    && super.mayPickup(
+                    player
+            );
         }
     }
 
@@ -797,15 +809,13 @@ public class KitPatternEncoderMenu
 
         private GhostIngredientSlot(
                 @NotNull IItemHandler itemHandler,
-                int slot,
-                int x,
-                int y
+                int slot
         ) {
             super(
                     itemHandler,
                     slot,
-                    x,
-                    y
+                    0,
+                    0
             );
         }
 

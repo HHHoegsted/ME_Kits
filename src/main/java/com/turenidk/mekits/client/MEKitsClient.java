@@ -6,6 +6,7 @@ import appeng.client.gui.style.StyleManager;
 import com.turenidk.mekits.MEKits;
 import com.turenidk.mekits.client.screen.KitPatternEncoderScreen;
 import com.turenidk.mekits.client.screen.MEKitPackagerScreen;
+import com.turenidk.mekits.menu.KitPatternEncoderMenu;
 import com.turenidk.mekits.menu.MEKitPackagerMenu;
 import com.turenidk.mekits.part.KitPatternEncoderPart;
 import net.minecraft.network.chat.Component;
@@ -22,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
         dist = Dist.CLIENT
 )
 public final class MEKitsClient {
+
+    private static final String ENCODER_SCREEN_STYLE =
+            "/screens/kit_pattern_encoder.json";
 
     private static final String PACKAGER_SCREEN_STYLE =
             "/screens/me_kit_packager.json";
@@ -46,9 +50,20 @@ public final class MEKitsClient {
     private static void registerMenuScreens(
             @NotNull RegisterMenuScreensEvent event
     ) {
-        event.register(
+        event.<KitPatternEncoderMenu, KitPatternEncoderScreen>register(
                 MEKits.KIT_PATTERN_ENCODER_MENU.get(),
-                KitPatternEncoderScreen::new
+                (
+                        KitPatternEncoderMenu menu,
+                        Inventory playerInventory,
+                        Component title
+                ) -> new KitPatternEncoderScreen(
+                        menu,
+                        playerInventory,
+                        title,
+                        StyleManager.loadStyleDoc(
+                                ENCODER_SCREEN_STYLE
+                        )
+                )
         );
 
         event.<MEKitPackagerMenu, MEKitPackagerScreen>register(

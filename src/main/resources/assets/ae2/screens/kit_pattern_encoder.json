@@ -1,0 +1,102 @@
+{
+  "$schema": "schema.json",
+  "includes": [
+    "terminals/terminal.json"
+  ],
+  "slots": {
+    "BLANK_PATTERN": {
+      "left": 147,
+      "bottom": 165
+    },
+    "ENCODED_PATTERN": {
+      "left": 147,
+      "bottom": 118
+    },
+    "PROCESSING_INPUTS": {
+      "left": 24,
+      "bottom": 158,
+      "grid": "BREAK_AFTER_3COLS"
+    }
+  },
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "gui.ae2.Terminal"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    },
+    "crafting_grid_title": {
+      "text": {
+        "translate": "screen.mekits.kit_pattern_encoder.pattern_encoding"
+      },
+      "position": {
+        "left": 8,
+        "bottom": 177
+      }
+    }
+  },
+  "terminalStyle": {
+    "header": {
+      "texture": "guis/pattern.png",
+      "srcRect": [
+        0,
+        0,
+        195,
+        17
+      ]
+    },
+    "firstRow": {
+      "texture": "guis/pattern.png",
+      "srcRect": [
+        0,
+        17,
+        195,
+        18
+      ]
+    },
+    "row": {
+      "texture": "guis/pattern.png",
+      "srcRect": [
+        0,
+        35,
+        195,
+        18
+      ]
+    },
+    "lastRow": {
+      "texture": "guis/pattern.png",
+      "srcRect": [
+        0,
+        53,
+        195,
+        18
+      ]
+    },
+    "bottom": {
+      "texture": "guis/pattern.png",
+      "srcRect": [
+        0,
+        71,
+        195,
+        180
+      ]
+    }
+  },
+  "widgets": {
+    "ingredientGridBackground": {
+      "left": 8,
+      "bottom": 165,
+      "width": 70,
+      "height": 66
+    },
+    "ingredientScrollbar": {
+      "left": 15,
+      "bottom": 158,
+      "width": 8,
+      "height": 52
+    }
+  }
+}
