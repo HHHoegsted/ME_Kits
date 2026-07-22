@@ -112,6 +112,15 @@ public class MEKits {
                     )
             );
 
+    public static final DeferredItem<Item>
+            KIT_ICON_OVERLAY =
+            ITEMS.register(
+                    "kit_icon_overlay",
+                    () -> new Item(
+                            new Item.Properties()
+                    )
+            );
+
     public static final DeferredItem<
             PartItem<KitPatternEncoderPart>
             > KIT_PATTERN_ENCODER_PART =
