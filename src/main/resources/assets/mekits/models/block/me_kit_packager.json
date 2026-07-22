@@ -1,6 +1,12 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "minecraft:block/iron_block"
+    "particle": "mekits:block/me_kit_packager_side",
+    "down": "mekits:block/me_kit_packager_side",
+    "up": "mekits:block/me_kit_packager_top",
+    "north": "mekits:block/me_kit_packager_front",
+    "south": "mekits:block/me_kit_packager_side",
+    "west": "mekits:block/me_kit_packager_side",
+    "east": "mekits:block/me_kit_packager_side"
   }
 }

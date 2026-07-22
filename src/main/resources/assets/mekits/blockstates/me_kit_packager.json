@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "mekits:block/me_kit_packager"
+    },
+    "facing=east": {
+      "model": "mekits:block/me_kit_packager",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "mekits:block/me_kit_packager",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "mekits:block/me_kit_packager",
+      "y": 270
     }
   }
 }
