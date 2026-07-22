@@ -7,7 +7,6 @@ import com.turenidk.mekits.menu.KitPatternEncoderMenu;
 import com.turenidk.mekits.network.payload.AdjustIngredientQuantityPayload;
 import com.turenidk.mekits.network.payload.ClearEditorStatePayload;
 import com.turenidk.mekits.network.payload.EncodePatternPayload;
-import com.turenidk.mekits.network.payload.UpdateKitNamePayload;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
@@ -20,16 +19,6 @@ public final class KitPatternEncoderScreen
 
     private static final String DIALOG_TITLE_TEXT_ID =
             "dialog_title";
-
-    /*
-     * Pattern names are no longer part of the user-facing workflow.
-     *
-     * The current server-side pattern format still expects a non-empty
-     * compatibility value. This can be removed when the legacy name
-     * data component is removed from the encoded-pattern data model.
-     */
-    private static final String LEGACY_INTERNAL_KIT_NAME =
-            "ME Kit";
 
     private static final int CLEAR_BUTTON_LEFT =
             79;
@@ -239,12 +228,6 @@ public final class KitPatternEncoderScreen
         if (!menu.isOperational()) {
             return;
         }
-
-        PacketDistributor.sendToServer(
-                new UpdateKitNamePayload(
-                        LEGACY_INTERNAL_KIT_NAME
-                )
-        );
 
         PacketDistributor.sendToServer(
                 EncodePatternPayload.INSTANCE

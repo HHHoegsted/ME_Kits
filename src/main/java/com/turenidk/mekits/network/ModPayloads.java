@@ -3,14 +3,14 @@ package com.turenidk.mekits.network;
 import com.turenidk.mekits.network.payload.AdjustIngredientQuantityPayload;
 import com.turenidk.mekits.network.payload.ClearEditorStatePayload;
 import com.turenidk.mekits.network.payload.EncodePatternPayload;
-import com.turenidk.mekits.network.payload.UpdateKitNamePayload;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModPayloads {
 
-    private static final String NETWORK_VERSION = "3";
+    private static final String NETWORK_VERSION =
+            "4";
 
     private ModPayloads() {
     }
@@ -30,12 +30,6 @@ public final class ModPayloads {
                 event.registrar(
                         NETWORK_VERSION
                 );
-
-        registrar.playToServer(
-                UpdateKitNamePayload.TYPE,
-                UpdateKitNamePayload.STREAM_CODEC,
-                UpdateKitNamePayload::handle
-        );
 
         registrar.playToServer(
                 EncodePatternPayload.TYPE,

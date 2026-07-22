@@ -20,23 +20,25 @@ public final class KitPatternEncoderLogic {
     private static final String PATTERN_INVENTORY_TAG =
             "pattern_inventory";
 
-    private static final String KIT_NAME_TAG =
-            "kit_name";
-
     private static final String INGREDIENT_DEFINITIONS_TAG =
             "ingredient_definitions";
 
-    public static final int BLANK_PATTERN_SLOT = 0;
-    public static final int ENCODED_PATTERN_SLOT = 1;
-    public static final int PATTERN_SLOT_COUNT = 2;
+    public static final int BLANK_PATTERN_SLOT =
+            0;
 
-    public static final int MAX_INGREDIENT_DEFINITIONS = 27;
+    public static final int ENCODED_PATTERN_SLOT =
+            1;
+
+    public static final int PATTERN_SLOT_COUNT =
+            2;
+
+    public static final int MAX_INGREDIENT_DEFINITIONS =
+            27;
 
     public enum EncodeResult {
         SUCCESS,
         OUTPUT_OCCUPIED,
         NO_BLANK_PATTERN,
-        NAME_REQUIRED,
         CONTENTS_REQUIRED,
         INVALID_CONTENTS,
         INTERNAL_ERROR
@@ -50,8 +52,6 @@ public final class KitPatternEncoderLogic {
                     ItemStack.EMPTY
             );
 
-    private String kitName = "";
-
     private final NonNullList<ItemStack> ingredientDefinitions =
             NonNullList.withSize(
                     MAX_INGREDIENT_DEFINITIONS,
@@ -59,7 +59,9 @@ public final class KitPatternEncoderLogic {
             );
 
     private final ItemStackHandler patternItemHandler =
-            new ItemStackHandler(patternInventory) {
+            new ItemStackHandler(
+                    patternInventory
+            ) {
 
                 @Override
                 public void setStackInSlot(
@@ -68,21 +70,30 @@ public final class KitPatternEncoderLogic {
                 ) {
                     if (
                             !stack.isEmpty()
-                                    && !isItemValid(slot, stack)
+                                    && !isItemValid(
+                                    slot,
+                                    stack
+                            )
                     ) {
                         return;
                     }
 
-                    ItemStack storedStack = stack;
+                    ItemStack storedStack =
+                            stack;
 
                     if (!stack.isEmpty()) {
                         int allowedCount =
                                 Math.min(
-                                        getSlotLimit(slot),
+                                        getSlotLimit(
+                                                slot
+                                        ),
                                         stack.getMaxStackSize()
                                 );
 
-                        if (stack.getCount() > allowedCount) {
+                        if (
+                                stack.getCount()
+                                        > allowedCount
+                        ) {
                             storedStack =
                                     stack.copyWithCount(
                                             allowedCount
@@ -104,28 +115,45 @@ public final class KitPatternEncoderLogic {
                     return switch (slot) {
                         case BLANK_PATTERN_SLOT ->
                                 stack.is(
-                                        MEKits.BLANK_ME_KIT_PATTERN.get()
+                                        MEKits
+                                                .BLANK_ME_KIT_PATTERN
+                                                .get()
                                 );
 
                         case ENCODED_PATTERN_SLOT ->
-                                isValidEncodedPattern(stack);
+                                isValidEncodedPattern(
+                                        stack
+                                );
 
-                        default -> false;
+                        default ->
+                                false;
                     };
                 }
 
                 @Override
-                public int getSlotLimit(int slot) {
+                public int getSlotLimit(
+                        int slot
+                ) {
                     return switch (slot) {
-                        case BLANK_PATTERN_SLOT -> 64;
-                        case ENCODED_PATTERN_SLOT -> 1;
-                        default -> 0;
+                        case BLANK_PATTERN_SLOT ->
+                                64;
+
+                        case ENCODED_PATTERN_SLOT ->
+                                1;
+
+                        default ->
+                                0;
                     };
                 }
 
                 @Override
-                protected void onContentsChanged(int slot) {
-                    if (slot == ENCODED_PATTERN_SLOT) {
+                protected void onContentsChanged(
+                        int slot
+                ) {
+                    if (
+                            slot
+                                    == ENCODED_PATTERN_SLOT
+                    ) {
                         ItemStack encodedPattern =
                                 getStackInSlot(
                                         ENCODED_PATTERN_SLOT
@@ -143,7 +171,9 @@ public final class KitPatternEncoderLogic {
             };
 
     private final ItemStackHandler ingredientDefinitionHandler =
-            new ItemStackHandler(ingredientDefinitions) {
+            new ItemStackHandler(
+                    ingredientDefinitions
+            ) {
 
                 @Override
                 public boolean isItemValid(
@@ -154,7 +184,9 @@ public final class KitPatternEncoderLogic {
                 }
 
                 @Override
-                protected void onContentsChanged(int slot) {
+                protected void onContentsChanged(
+                        int slot
+                ) {
                     notifyChanged();
                 }
             };
@@ -162,7 +194,8 @@ public final class KitPatternEncoderLogic {
     public KitPatternEncoderLogic(
             @NotNull Runnable changeListener
     ) {
-        this.changeListener = changeListener;
+        this.changeListener =
+                changeListener;
     }
 
     public @NotNull IItemHandler getPatternItemHandler() {
@@ -180,7 +213,8 @@ public final class KitPatternEncoderLogic {
     ) {
         if (
                 slot < 0
-                        || slot >= MAX_INGREDIENT_DEFINITIONS
+                        || slot
+                        >= MAX_INGREDIENT_DEFINITIONS
                         || representativeStack.isEmpty()
                         || quantity <= 0
                         || isForbiddenIngredientDefinition(
@@ -193,7 +227,8 @@ public final class KitPatternEncoderLogic {
         int validatedQuantity =
                 Math.min(
                         quantity,
-                        representativeStack.getMaxStackSize()
+                        representativeStack
+                                .getMaxStackSize()
                 );
 
         ingredientDefinitionHandler.setStackInSlot(
@@ -213,16 +248,18 @@ public final class KitPatternEncoderLogic {
     ) {
         if (
                 slot < 0
-                        || slot >= MAX_INGREDIENT_DEFINITIONS
+                        || slot
+                        >= MAX_INGREDIENT_DEFINITIONS
                         || direction == 0
         ) {
             return false;
         }
 
         ItemStack currentDefinition =
-                ingredientDefinitionHandler.getStackInSlot(
-                        slot
-                );
+                ingredientDefinitionHandler
+                        .getStackInSlot(
+                                slot
+                        );
 
         if (currentDefinition.isEmpty()) {
             return false;
@@ -232,7 +269,8 @@ public final class KitPatternEncoderLogic {
                 currentDefinition.getCount();
 
         int maximumQuantity =
-                currentDefinition.getMaxStackSize();
+                currentDefinition
+                        .getMaxStackSize();
 
         int newQuantity;
 
@@ -255,7 +293,10 @@ public final class KitPatternEncoderLogic {
                     );
         }
 
-        if (newQuantity == currentQuantity) {
+        if (
+                newQuantity
+                        == currentQuantity
+        ) {
             return false;
         }
 
@@ -269,17 +310,22 @@ public final class KitPatternEncoderLogic {
         return true;
     }
 
-    public boolean clearIngredientDefinition(int slot) {
+    public boolean clearIngredientDefinition(
+            int slot
+    ) {
         if (
                 slot < 0
-                        || slot >= MAX_INGREDIENT_DEFINITIONS
+                        || slot
+                        >= MAX_INGREDIENT_DEFINITIONS
         ) {
             return false;
         }
 
         if (
                 ingredientDefinitionHandler
-                        .getStackInSlot(slot)
+                        .getStackInSlot(
+                                slot
+                        )
                         .isEmpty()
         ) {
             return false;
@@ -295,23 +341,31 @@ public final class KitPatternEncoderLogic {
 
     public boolean clearEditorState() {
         boolean changed =
-                !kitName.isEmpty();
-
-        kitName = "";
+                false;
 
         for (
                 int slot = 0;
-                slot < MAX_INGREDIENT_DEFINITIONS;
+                slot
+                        < MAX_INGREDIENT_DEFINITIONS;
                 slot++
         ) {
-            if (!ingredientDefinitions.get(slot).isEmpty()) {
-                ingredientDefinitions.set(
-                        slot,
-                        ItemStack.EMPTY
-                );
-
-                changed = true;
+            if (
+                    ingredientDefinitions
+                            .get(
+                                    slot
+                            )
+                            .isEmpty()
+            ) {
+                continue;
             }
+
+            ingredientDefinitions.set(
+                    slot,
+                    ItemStack.EMPTY
+            );
+
+            changed =
+                    true;
         }
 
         if (!changed) {
@@ -326,14 +380,22 @@ public final class KitPatternEncoderLogic {
     public boolean insertBlankPattern(
             @NotNull ItemStack sourceStack
     ) {
-        if (!sourceStack.is(MEKits.BLANK_ME_KIT_PATTERN.get())) {
+        if (
+                !sourceStack.is(
+                        MEKits
+                                .BLANK_ME_KIT_PATTERN
+                                .get()
+                )
+        ) {
             return false;
         }
 
         ItemStack remainder =
                 patternItemHandler.insertItem(
                         BLANK_PATTERN_SLOT,
-                        sourceStack.copyWithCount(1),
+                        sourceStack.copyWithCount(
+                                1
+                        ),
                         false
                 );
 
@@ -343,14 +405,20 @@ public final class KitPatternEncoderLogic {
     public boolean insertEncodedPattern(
             @NotNull ItemStack sourceStack
     ) {
-        if (!isValidEncodedPattern(sourceStack)) {
+        if (
+                !isValidEncodedPattern(
+                        sourceStack
+                )
+        ) {
             return false;
         }
 
         ItemStack remainder =
                 patternItemHandler.insertItem(
                         ENCODED_PATTERN_SLOT,
-                        sourceStack.copyWithCount(1),
+                        sourceStack.copyWithCount(
+                                1
+                        ),
                         false
                 );
 
@@ -359,60 +427,71 @@ public final class KitPatternEncoderLogic {
 
     public int getBlankPatternCount() {
         return patternItemHandler
-                .getStackInSlot(BLANK_PATTERN_SLOT)
+                .getStackInSlot(
+                        BLANK_PATTERN_SLOT
+                )
                 .getCount();
     }
 
     public boolean hasEncodedPattern() {
         return !patternItemHandler
-                .getStackInSlot(ENCODED_PATTERN_SLOT)
+                .getStackInSlot(
+                        ENCODED_PATTERN_SLOT
+                )
                 .isEmpty();
     }
 
+    /*
+     * Temporary compatibility methods.
+     *
+     * The menu and the old name-update packet still reference these
+     * during this migration step. They no longer affect encoder state
+     * or generated patterns.
+     */
     public @NotNull String getKitName() {
-        return kitName;
+        return "";
     }
 
     public void setKitName(
             @NotNull String newKitName
     ) {
-        if (kitName.equals(newKitName)) {
-            return;
-        }
-
-        kitName = newKitName;
-        notifyChanged();
+        // Kit names are no longer part of the encoded-pattern model.
     }
 
     public @NotNull EncodeResult encodePattern() {
         if (
                 !patternItemHandler
-                        .getStackInSlot(ENCODED_PATTERN_SLOT)
+                        .getStackInSlot(
+                                ENCODED_PATTERN_SLOT
+                        )
                         .isEmpty()
         ) {
-            return EncodeResult.OUTPUT_OCCUPIED;
-        }
-
-        if (kitName.isBlank()) {
-            return EncodeResult.NAME_REQUIRED;
+            return EncodeResult
+                    .OUTPUT_OCCUPIED;
         }
 
         List<ItemStack> definitions =
                 getIngredientDefinitions();
 
         if (definitions.isEmpty()) {
-            return EncodeResult.CONTENTS_REQUIRED;
+            return EncodeResult
+                    .CONTENTS_REQUIRED;
         }
 
-        for (ItemStack definition : definitions) {
+        for (
+                ItemStack definition
+                : definitions
+        ) {
             if (
                     definition.isEmpty()
-                            || definition.getCount() <= 0
+                            || definition.getCount()
+                            <= 0
                             || isForbiddenIngredientDefinition(
                             definition
                     )
             ) {
-                return EncodeResult.INVALID_CONTENTS;
+                return EncodeResult
+                        .INVALID_CONTENTS;
             }
         }
 
@@ -424,31 +503,47 @@ public final class KitPatternEncoderLogic {
         if (
                 availableBlankPatterns.isEmpty()
                         || !availableBlankPatterns.is(
-                        MEKits.BLANK_ME_KIT_PATTERN.get()
+                        MEKits
+                                .BLANK_ME_KIT_PATTERN
+                                .get()
                 )
-                        || availableBlankPatterns.getCount() < 1
+                        || availableBlankPatterns
+                        .getCount()
+                        < 1
         ) {
-            return EncodeResult.NO_BLANK_PATTERN;
+            return EncodeResult
+                    .NO_BLANK_PATTERN;
         }
 
         ItemStack encodedPattern =
                 new ItemStack(
-                        MEKits.ENCODED_ME_KIT_PATTERN.get(),
+                        MEKits
+                                .ENCODED_ME_KIT_PATTERN
+                                .get(),
                         1
                 );
 
+        /*
+         * The first non-empty definition is now the kit's implicit
+         * identity. It is already the first stack in KitContents, so
+         * no separate name or icon component is required.
+         */
         encodedPattern.set(
-                ModDataComponents.KIT_NAME.get(),
-                kitName
+                ModDataComponents
+                        .KIT_CONTENTS
+                        .get(),
+                new KitContents(
+                        definitions
+                )
         );
 
-        encodedPattern.set(
-                ModDataComponents.KIT_CONTENTS.get(),
-                new KitContents(definitions)
-        );
-
-        if (!isValidEncodedPattern(encodedPattern)) {
-            return EncodeResult.INVALID_CONTENTS;
+        if (
+                !isValidEncodedPattern(
+                        encodedPattern
+                )
+        ) {
+            return EncodeResult
+                    .INVALID_CONTENTS;
         }
 
         ItemStack simulatedOutputRemainder =
@@ -458,8 +553,12 @@ public final class KitPatternEncoderLogic {
                         true
                 );
 
-        if (!simulatedOutputRemainder.isEmpty()) {
-            return EncodeResult.INTERNAL_ERROR;
+        if (
+                !simulatedOutputRemainder
+                        .isEmpty()
+        ) {
+            return EncodeResult
+                    .INTERNAL_ERROR;
         }
 
         ItemStack simulatedBlankExtraction =
@@ -470,12 +569,17 @@ public final class KitPatternEncoderLogic {
                 );
 
         if (
-                simulatedBlankExtraction.getCount() != 1
+                simulatedBlankExtraction
+                        .getCount()
+                        != 1
                         || !simulatedBlankExtraction.is(
-                        MEKits.BLANK_ME_KIT_PATTERN.get()
+                        MEKits
+                                .BLANK_ME_KIT_PATTERN
+                                .get()
                 )
         ) {
-            return EncodeResult.NO_BLANK_PATTERN;
+            return EncodeResult
+                    .NO_BLANK_PATTERN;
         }
 
         ItemStack consumedBlankPattern =
@@ -486,12 +590,17 @@ public final class KitPatternEncoderLogic {
                 );
 
         if (
-                consumedBlankPattern.getCount() != 1
+                consumedBlankPattern
+                        .getCount()
+                        != 1
                         || !consumedBlankPattern.is(
-                        MEKits.BLANK_ME_KIT_PATTERN.get()
+                        MEKits
+                                .BLANK_ME_KIT_PATTERN
+                                .get()
                 )
         ) {
-            return EncodeResult.INTERNAL_ERROR;
+            return EncodeResult
+                    .INTERNAL_ERROR;
         }
 
         ItemStack outputRemainder =
@@ -516,7 +625,8 @@ public final class KitPatternEncoderLogic {
                 );
             }
 
-            return EncodeResult.INTERNAL_ERROR;
+            return EncodeResult
+                    .INTERNAL_ERROR;
         }
 
         notifyChanged();
@@ -525,16 +635,26 @@ public final class KitPatternEncoderLogic {
     }
 
     public @NotNull List<ItemStack> getIngredientDefinitions() {
-        return ingredientDefinitions.stream()
-                .filter(stack -> !stack.isEmpty())
-                .map(ItemStack::copy)
+        return ingredientDefinitions
+                .stream()
+                .filter(
+                        stack ->
+                                !stack.isEmpty()
+                )
+                .map(
+                        ItemStack::copy
+                )
                 .toList();
     }
 
     public int getIngredientDefinitionCount() {
-        int definitionCount = 0;
+        int definitionCount =
+                0;
 
-        for (ItemStack definition : ingredientDefinitions) {
+        for (
+                ItemStack definition
+                : ingredientDefinitions
+        ) {
             if (!definition.isEmpty()) {
                 definitionCount++;
             }
@@ -568,7 +688,9 @@ public final class KitPatternEncoderLogic {
 
         for (
                 int slot = 0;
-                slot < patternItemHandler.getSlots();
+                slot
+                        < patternItemHandler
+                        .getSlots();
                 slot++
         ) {
             ItemStack storedStack =
@@ -579,7 +701,9 @@ public final class KitPatternEncoderLogic {
                     );
 
             if (!storedStack.isEmpty()) {
-                removedPatterns.add(storedStack);
+                removedPatterns.add(
+                        storedStack
+                );
             }
         }
 
@@ -604,11 +728,6 @@ public final class KitPatternEncoderLogic {
                 patternInventoryTag
         );
 
-        tag.putString(
-                KIT_NAME_TAG,
-                kitName
-        );
-
         CompoundTag ingredientDefinitionsTag =
                 new CompoundTag();
 
@@ -630,24 +749,32 @@ public final class KitPatternEncoderLogic {
     ) {
         patternInventory.clear();
 
-        if (tag.contains(PATTERN_INVENTORY_TAG)) {
+        if (
+                tag.contains(
+                        PATTERN_INVENTORY_TAG
+                )
+        ) {
             ContainerHelper.loadAllItems(
-                    tag.getCompound(PATTERN_INVENTORY_TAG),
+                    tag.getCompound(
+                            PATTERN_INVENTORY_TAG
+                    ),
                     patternInventory,
                     registries
             );
         }
 
         boolean hasSavedEditorState =
-                tag.contains(KIT_NAME_TAG)
-                        || tag.contains(
+                tag.contains(
                         INGREDIENT_DEFINITIONS_TAG
                 );
 
-        kitName = tag.getString(KIT_NAME_TAG);
         ingredientDefinitions.clear();
 
-        if (tag.contains(INGREDIENT_DEFINITIONS_TAG)) {
+        if (
+                tag.contains(
+                        INGREDIENT_DEFINITIONS_TAG
+                )
+        ) {
             ContainerHelper.loadAllItems(
                     tag.getCompound(
                             INGREDIENT_DEFINITIONS_TAG
@@ -671,26 +798,23 @@ public final class KitPatternEncoderLogic {
     ) {
         if (
                 !patternStack.is(
-                        MEKits.ENCODED_ME_KIT_PATTERN.get()
+                        MEKits
+                                .ENCODED_ME_KIT_PATTERN
+                                .get()
                 )
         ) {
             return false;
         }
 
-        String encodedKitName =
-                patternStack.get(
-                        ModDataComponents.KIT_NAME.get()
-                );
-
         KitContents encodedContents =
                 patternStack.get(
-                        ModDataComponents.KIT_CONTENTS.get()
+                        ModDataComponents
+                                .KIT_CONTENTS
+                                .get()
                 );
 
         if (
-                encodedKitName == null
-                        || encodedKitName.isBlank()
-                        || encodedContents == null
+                encodedContents == null
                         || encodedContents.isEmpty()
         ) {
             return false;
@@ -706,7 +830,10 @@ public final class KitPatternEncoderLogic {
             return false;
         }
 
-        for (ItemStack encodedStack : encodedStacks) {
+        for (
+                ItemStack encodedStack
+                : encodedStacks
+        ) {
             if (
                     encodedStack.isEmpty()
                             || isForbiddenIngredientDefinition(
@@ -723,31 +850,28 @@ public final class KitPatternEncoderLogic {
     private boolean loadEditorDefinitionFromPattern(
             @NotNull ItemStack patternStack
     ) {
-        if (!isValidEncodedPattern(patternStack)) {
+        if (
+                !isValidEncodedPattern(
+                        patternStack
+                )
+        ) {
             return false;
         }
 
-        String encodedKitName =
-                patternStack.get(
-                        ModDataComponents.KIT_NAME.get()
-                );
-
         KitContents encodedContents =
                 patternStack.get(
-                        ModDataComponents.KIT_CONTENTS.get()
+                        ModDataComponents
+                                .KIT_CONTENTS
+                                .get()
                 );
 
-        if (
-                encodedKitName == null
-                        || encodedContents == null
-        ) {
+        if (encodedContents == null) {
             return false;
         }
 
         List<ItemStack> encodedStacks =
                 encodedContents.stacks();
 
-        kitName = encodedKitName;
         ingredientDefinitions.clear();
 
         for (
@@ -757,7 +881,11 @@ public final class KitPatternEncoderLogic {
         ) {
             ingredientDefinitions.set(
                     slot,
-                    encodedStacks.get(slot).copy()
+                    encodedStacks
+                            .get(
+                                    slot
+                            )
+                            .copy()
             );
         }
 
@@ -769,12 +897,18 @@ public final class KitPatternEncoderLogic {
     private boolean isForbiddenIngredientDefinition(
             @NotNull ItemStack stack
     ) {
-        return stack.is(MEKits.ME_KIT.get())
-                || stack.is(
-                MEKits.BLANK_ME_KIT_PATTERN.get()
+        return stack.is(
+                MEKits.ME_KIT.get()
         )
                 || stack.is(
-                MEKits.ENCODED_ME_KIT_PATTERN.get()
+                MEKits
+                        .BLANK_ME_KIT_PATTERN
+                        .get()
+        )
+                || stack.is(
+                MEKits
+                        .ENCODED_ME_KIT_PATTERN
+                        .get()
         );
     }
 

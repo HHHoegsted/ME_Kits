@@ -16,31 +16,35 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class MEKitPattern implements IPatternDetails {
+public final class MEKitPattern
+        implements IPatternDetails {
+
     private final AEItemKey definition;
+
     private final IInput[] inputs;
+
     private final List<GenericStack> outputs;
 
-    public MEKitPattern(AEItemKey definition) {
-        this.definition = definition;
+    public MEKitPattern(
+            AEItemKey definition
+    ) {
+        this.definition =
+                definition;
 
-        ItemStack patternStack = definition.toStack();
+        ItemStack patternStack =
+                definition.toStack();
 
-        String kitName = patternStack.get(
-                ModDataComponents.KIT_NAME.get()
-        );
+        KitContents kitContents =
+                patternStack.get(
+                        ModDataComponents
+                                .KIT_CONTENTS
+                                .get()
+                );
 
-        KitContents kitContents = patternStack.get(
-                ModDataComponents.KIT_CONTENTS.get()
-        );
-
-        if (kitName == null || kitName.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Encoded ME Kit Pattern has no kit name"
-            );
-        }
-
-        if (kitContents == null || kitContents.isEmpty()) {
+        if (
+                kitContents == null
+                        || kitContents.isEmpty()
+        ) {
             throw new IllegalArgumentException(
                     "Encoded ME Kit Pattern has no contents"
             );
@@ -49,8 +53,14 @@ public final class MEKitPattern implements IPatternDetails {
         Map<AEItemKey, Long> condensedInputs =
                 new LinkedHashMap<>();
 
-        for (ItemStack containedStack : kitContents.stacks()) {
-            AEItemKey key = AEItemKey.of(containedStack);
+        for (
+                ItemStack containedStack
+                : kitContents.stacks()
+        ) {
+            AEItemKey key =
+                    AEItemKey.of(
+                            containedStack
+                    );
 
             if (key == null) {
                 throw new IllegalArgumentException(
@@ -65,10 +75,13 @@ public final class MEKitPattern implements IPatternDetails {
             );
         }
 
-        List<IInput> inputList = new ArrayList<>();
+        List<IInput> inputList =
+                new ArrayList<>();
 
-        for (Map.Entry<AEItemKey, Long> entry :
-                condensedInputs.entrySet()) {
+        for (
+                Map.Entry<AEItemKey, Long> entry
+                : condensedInputs.entrySet()
+        ) {
             inputList.add(
                     new ExactInput(
                             entry.getKey(),
@@ -77,22 +90,32 @@ public final class MEKitPattern implements IPatternDetails {
             );
         }
 
-        this.inputs = inputList.toArray(IInput[]::new);
+        inputs =
+                inputList.toArray(
+                        IInput[]::new
+                );
 
         ItemStack outputKit =
-                MEKits.ME_KIT.get().getDefaultInstance();
+                MEKits.ME_KIT
+                        .get()
+                        .getDefaultInstance();
 
+        /*
+         * The finished kit carries the same ordered contents as the
+         * encoded pattern. The first stack is therefore also the
+         * canonical visual identity for both the pattern and the kit.
+         */
         outputKit.set(
-                ModDataComponents.KIT_NAME.get(),
-                kitName
-        );
-
-        outputKit.set(
-                ModDataComponents.KIT_CONTENTS.get(),
+                ModDataComponents
+                        .KIT_CONTENTS
+                        .get(),
                 kitContents
         );
 
-        AEItemKey outputKey = AEItemKey.of(outputKit);
+        AEItemKey outputKey =
+                AEItemKey.of(
+                        outputKit
+                );
 
         if (outputKey == null) {
             throw new IllegalStateException(
@@ -100,9 +123,13 @@ public final class MEKitPattern implements IPatternDetails {
             );
         }
 
-        this.outputs = List.of(
-                new GenericStack(outputKey, 1)
-        );
+        outputs =
+                List.of(
+                        new GenericStack(
+                                outputKey,
+                                1
+                        )
+                );
     }
 
     @Override
@@ -126,9 +153,13 @@ public final class MEKitPattern implements IPatternDetails {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(
+            Object object
+    ) {
         return object instanceof MEKitPattern other
-                && definition.equals(other.definition);
+                && definition.equals(
+                other.definition
+        );
     }
 
     @Override
@@ -136,15 +167,27 @@ public final class MEKitPattern implements IPatternDetails {
         return definition.hashCode();
     }
 
-    private static final class ExactInput implements IInput {
+    private static final class ExactInput
+            implements IInput {
+
         private final GenericStack[] possibleInputs;
+
         private final long multiplier;
 
-        private ExactInput(AEKey key, long multiplier) {
-            this.possibleInputs = new GenericStack[] {
-                    new GenericStack(key, 1)
-            };
-            this.multiplier = multiplier;
+        private ExactInput(
+                AEKey key,
+                long multiplier
+        ) {
+            possibleInputs =
+                    new GenericStack[] {
+                            new GenericStack(
+                                    key,
+                                    1
+                            )
+                    };
+
+            this.multiplier =
+                    multiplier;
         }
 
         @Override
@@ -158,13 +201,20 @@ public final class MEKitPattern implements IPatternDetails {
         }
 
         @Override
-        public boolean isValid(AEKey input, Level level) {
-            return input.matches(possibleInputs[0]);
+        public boolean isValid(
+                AEKey input,
+                Level level
+        ) {
+            return input.matches(
+                    possibleInputs[0]
+            );
         }
 
         @Nullable
         @Override
-        public AEKey getRemainingKey(AEKey template) {
+        public AEKey getRemainingKey(
+                AEKey template
+        ) {
             return null;
         }
     }

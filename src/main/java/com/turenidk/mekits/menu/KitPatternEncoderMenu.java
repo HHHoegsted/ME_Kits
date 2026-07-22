@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 public class KitPatternEncoderMenu
         extends MEStorageMenu {
 
-    public static final int MAX_KIT_NAME_LENGTH =
-            64;
-
     public static final int VISIBLE_INGREDIENT_SLOT_COUNT =
             9;
 
@@ -67,9 +64,6 @@ public class KitPatternEncoderMenu
     @NotNull
     private final KitPatternEncoderLogic encoderLogic;
 
-    @NotNull
-    private String kitName;
-
     private final DataSlot ingredientPage =
             DataSlot.standalone();
 
@@ -97,9 +91,6 @@ public class KitPatternEncoderMenu
 
         this.encoderLogic =
                 host.getEncoderLogic();
-
-        this.kitName =
-                encoderLogic.getKitName();
 
         ingredientPage.set(
                 0
@@ -137,15 +128,6 @@ public class KitPatternEncoderMenu
         );
     }
 
-    /*
-     * The final terminal may expose view-cell slots, but they must not
-     * be inserted ahead of the existing Encoder slots during this
-     * architecture step.
-     *
-     * The Encoder's current click and quick-move rules deliberately
-     * depend on the two pattern slots and nine definition slots being
-     * the first eleven menu slots.
-     */
     @Override
     protected boolean hideViewCells() {
         return true;
@@ -167,17 +149,6 @@ public class KitPatternEncoderMenu
                 "Kit Pattern Encoder ingredient handler "
                         + "must be modifiable"
         );
-    }
-
-    public @NotNull String getKitName() {
-        return kitName;
-    }
-
-    public void setInitialKitName(
-            @NotNull String initialKitName
-    ) {
-        this.kitName =
-                initialKitName;
     }
 
     public boolean isPowered() {
@@ -334,21 +305,6 @@ public class KitPatternEncoderMenu
         );
     }
 
-    public void updateKitName(
-            @NotNull String newKitName
-    ) {
-        if (!isOperational()) {
-            return;
-        }
-
-        encoderLogic.setKitName(
-                newKitName
-        );
-
-        kitName =
-                encoderLogic.getKitName();
-    }
-
     public boolean adjustIngredientQuantity(
             int definitionSlot,
             int direction,
@@ -382,9 +338,6 @@ public class KitPatternEncoderMenu
                 encoderLogic.clearEditorState();
 
         if (changed) {
-            kitName =
-                    encoderLogic.getKitName();
-
             broadcastFullState();
         }
 
@@ -667,12 +620,10 @@ public class KitPatternEncoderMenu
             implements IItemHandlerModifiable {
 
         @NotNull
-        private final IItemHandlerModifiable
-                backingHandler;
+        private final IItemHandlerModifiable backingHandler;
 
         private PagedIngredientHandler(
-                @NotNull IItemHandlerModifiable
-                        backingHandler
+                @NotNull IItemHandlerModifiable backingHandler
         ) {
             this.backingHandler =
                     backingHandler;

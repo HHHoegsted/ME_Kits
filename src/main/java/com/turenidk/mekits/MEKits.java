@@ -43,7 +43,8 @@ import java.util.List;
 @Mod(MEKits.MODID)
 public class MEKits {
 
-    public static final String MODID = "mekits";
+    public static final String MODID =
+            "mekits";
 
     public static final Logger LOGGER =
             LogUtils.getLogger();
@@ -84,7 +85,9 @@ public class MEKits {
                     "me_kit",
                     () -> new MEKitItem(
                             new Item.Properties()
-                                    .stacksTo(1)
+                                    .stacksTo(
+                                            1
+                                    )
                     )
             );
 
@@ -103,7 +106,9 @@ public class MEKits {
                     "encoded_me_kit_pattern",
                     () -> new EncodedMEKitPatternItem(
                             new Item.Properties()
-                                    .stacksTo(1)
+                                    .stacksTo(
+                                            1
+                                    )
                     )
             );
 
@@ -151,7 +156,9 @@ public class MEKits {
                     () -> BlockEntityType.Builder.of(
                             MEKitPackagerBlockEntity::new,
                             ME_KIT_PACKAGER.get()
-                    ).build(null)
+                    ).build(
+                            null
+                    )
             );
 
     public static final DeferredHolder<
@@ -168,27 +175,6 @@ public class MEKits {
                             .withMenuTitle(
                                     host -> Component.translatable(
                                             "menu.mekits.kit_pattern_encoder"
-                                    )
-                            )
-                            .withInitialData(
-                                    (
-                                            host,
-                                            buffer
-                                    ) -> buffer.writeUtf(
-                                            host.getEncoderLogic()
-                                                    .getKitName(),
-                                            KitPatternEncoderMenu
-                                                    .MAX_KIT_NAME_LENGTH
-                                    ),
-                                    (
-                                            host,
-                                            menu,
-                                            buffer
-                                    ) -> menu.setInitialKitName(
-                                            buffer.readUtf(
-                                                    KitPatternEncoderMenu
-                                                            .MAX_KIT_NAME_LENGTH
-                                            )
                                     )
                             )
                             .buildUnregistered(
@@ -256,13 +242,6 @@ public class MEKits {
                                                 ENCODED_ME_KIT_PATTERN
                                                         .get()
                                                         .getDefaultInstance();
-
-                                        testPattern.set(
-                                                ModDataComponents
-                                                        .KIT_NAME
-                                                        .get(),
-                                                "Test Kit"
-                                        );
 
                                         testPattern.set(
                                                 ModDataComponents

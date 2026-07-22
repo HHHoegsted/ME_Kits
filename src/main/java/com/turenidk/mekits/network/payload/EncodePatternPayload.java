@@ -74,9 +74,6 @@ public final class EncodePatternPayload
                     case NO_BLANK_PATTERN ->
                             "message.mekits.encoder.no_blank_pattern";
 
-                    case NAME_REQUIRED ->
-                            "message.mekits.encoder.name_required";
-
                     case CONTENTS_REQUIRED ->
                             "message.mekits.encoder.contents_required";
 

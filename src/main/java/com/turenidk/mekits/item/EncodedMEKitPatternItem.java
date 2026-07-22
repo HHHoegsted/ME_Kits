@@ -1,8 +1,6 @@
 package com.turenidk.mekits.item;
 
 import com.turenidk.mekits.MEKits;
-import com.turenidk.mekits.component.ModDataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -13,33 +11,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-public class EncodedMEKitPatternItem extends Item {
+public class EncodedMEKitPatternItem
+        extends Item {
 
     public EncodedMEKitPatternItem(
             Properties properties
     ) {
-        super(properties);
-    }
-
-    @Override
-    public Component getName(
-            ItemStack stack
-    ) {
-        String kitName =
-                stack.get(
-                        ModDataComponents.KIT_NAME.get()
-                );
-
-        if (
-                kitName == null
-                        || kitName.isBlank()
-        ) {
-            return super.getName(stack);
-        }
-
-        return Component.translatable(
-                "item.mekits.encoded_me_kit_pattern.named",
-                kitName
+        super(
+                properties
         );
     }
 
@@ -50,7 +29,9 @@ public class EncodedMEKitPatternItem extends Item {
             InteractionHand hand
     ) {
         ItemStack heldStack =
-                player.getItemInHand(hand);
+                player.getItemInHand(
+                        hand
+                );
 
         if (!player.isShiftKeyDown()) {
             return InteractionResultHolder.pass(
@@ -77,7 +58,9 @@ public class EncodedMEKitPatternItem extends Item {
         }
 
         return InteractionResultHolder.success(
-                player.getItemInHand(hand)
+                player.getItemInHand(
+                        hand
+                )
         );
     }
 
@@ -96,7 +79,10 @@ public class EncodedMEKitPatternItem extends Item {
             return InteractionResult.PASS;
         }
 
-        if (context.getLevel().isClientSide()) {
+        if (
+                context.getLevel()
+                        .isClientSide()
+        ) {
             return InteractionResult.SUCCESS;
         }
 
@@ -115,7 +101,9 @@ public class EncodedMEKitPatternItem extends Item {
         if (
                 stack.isEmpty()
                         || !stack.is(
-                        MEKits.ENCODED_ME_KIT_PATTERN.get()
+                        MEKits
+                                .ENCODED_ME_KIT_PATTERN
+                                .get()
                 )
         ) {
             return false;
@@ -126,16 +114,25 @@ public class EncodedMEKitPatternItem extends Item {
 
         ItemStack blankPatterns =
                 new ItemStack(
-                        MEKits.BLANK_ME_KIT_PATTERN.get(),
+                        MEKits
+                                .BLANK_ME_KIT_PATTERN
+                                .get(),
                         stack.getCount()
                 );
 
         for (
                 int slot = 0;
-                slot < inventory.getContainerSize();
+                slot
+                        < inventory
+                        .getContainerSize();
                 slot++
         ) {
-            if (inventory.getItem(slot) != stack) {
+            if (
+                    inventory.getItem(
+                            slot
+                    )
+                            != stack
+            ) {
                 continue;
             }
 
