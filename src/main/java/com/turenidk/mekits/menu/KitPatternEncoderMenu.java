@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -459,7 +460,9 @@ public class KitPatternEncoderMenu
                 );
             }
 
-            broadcastChanges();
+            if (player instanceof ServerPlayer) {
+                broadcastChanges();
+            }
 
             return;
         }
@@ -479,24 +482,25 @@ public class KitPatternEncoderMenu
     ) {
         if (
                 clickedSlotIndex < 0
-                        || clickedSlotIndex
-                        >= slots.size()
+                        || clickedSlotIndex >= slots.size()
         ) {
             return ItemStack.EMPTY;
         }
 
         if (
                 !isOperational()
-                        && clickedSlotIndex
-                        < GHOST_SLOT_END
+                        && clickedSlotIndex < GHOST_SLOT_END
         ) {
             return ItemStack.EMPTY;
         }
 
+        /*
+         * Ghost ingredients are definitions, not real inventory
+         * contents, and must never be shift-clicked.
+         */
         if (
                 clickedSlotIndex >= GHOST_SLOT_START
-                        && clickedSlotIndex
-                        < GHOST_SLOT_END
+                        && clickedSlotIndex < GHOST_SLOT_END
         ) {
             return ItemStack.EMPTY;
         }
@@ -516,9 +520,13 @@ public class KitPatternEncoderMenu
         ItemStack originalStack =
                 clickedStack.copy();
 
+        /*
+         * Items in the physical encoder slots should return to the
+         * player's inventory rather than being deposited directly
+         * into ME storage.
+         */
         if (
-                clickedSlotIndex
-                        < ENCODER_SLOT_COUNT
+                clickedSlotIndex < ENCODER_SLOT_COUNT
         ) {
             if (
                     !moveItemStackTo(
@@ -530,7 +538,35 @@ public class KitPatternEncoderMenu
             ) {
                 return ItemStack.EMPTY;
             }
-        } else if (
+
+            if (clickedStack.isEmpty()) {
+                clickedSlot.set(
+                        ItemStack.EMPTY
+                );
+            } else {
+                clickedSlot.setChanged();
+            }
+
+            if (
+                    clickedStack.getCount()
+                            == originalStack.getCount()
+            ) {
+                return ItemStack.EMPTY;
+            }
+
+            clickedSlot.onTake(
+                    player,
+                    clickedStack
+            );
+
+            return originalStack;
+        }
+
+        /*
+         * Give the KPE's two physical pattern slots priority when
+         * the player shift-clicks the matching pattern item.
+         */
+        if (
                 isOperational()
                         && clickedStack.is(
                         MEKits.BLANK_ME_KIT_PATTERN.get()
@@ -549,7 +585,31 @@ public class KitPatternEncoderMenu
             ) {
                 return ItemStack.EMPTY;
             }
-        } else if (
+
+            if (clickedStack.isEmpty()) {
+                clickedSlot.set(
+                        ItemStack.EMPTY
+                );
+            } else {
+                clickedSlot.setChanged();
+            }
+
+            if (
+                    clickedStack.getCount()
+                            == originalStack.getCount()
+            ) {
+                return ItemStack.EMPTY;
+            }
+
+            clickedSlot.onTake(
+                    player,
+                    clickedStack
+            );
+
+            return originalStack;
+        }
+
+        if (
                 isOperational()
                         && clickedStack.is(
                         MEKits.ENCODED_ME_KIT_PATTERN.get()
@@ -568,52 +628,39 @@ public class KitPatternEncoderMenu
             ) {
                 return ItemStack.EMPTY;
             }
-        } else if (
-                clickedSlotIndex
-                        < PLAYER_INVENTORY_END
-        ) {
+
+            if (clickedStack.isEmpty()) {
+                clickedSlot.set(
+                        ItemStack.EMPTY
+                );
+            } else {
+                clickedSlot.setChanged();
+            }
+
             if (
-                    !moveItemStackTo(
-                            clickedStack,
-                            HOTBAR_START,
-                            HOTBAR_END,
-                            false
-                    )
+                    clickedStack.getCount()
+                            == originalStack.getCount()
             ) {
                 return ItemStack.EMPTY;
             }
-        } else if (
-                !moveItemStackTo(
-                        clickedStack,
-                        PLAYER_INVENTORY_START,
-                        PLAYER_INVENTORY_END,
-                        false
-                )
-        ) {
-            return ItemStack.EMPTY;
-        }
 
-        if (clickedStack.isEmpty()) {
-            clickedSlot.set(
-                    ItemStack.EMPTY
+            clickedSlot.onTake(
+                    player,
+                    clickedStack
             );
-        } else {
-            clickedSlot.setChanged();
+
+            return originalStack;
         }
 
-        if (
-                clickedStack.getCount()
-                        == originalStack.getCount()
-        ) {
-            return ItemStack.EMPTY;
-        }
-
-        clickedSlot.onTake(
+        /*
+         * For every ordinary player-inventory item, retain the
+         * standard ME terminal behaviour. MEStorageMenu handles
+         * depositing the item into network storage.
+         */
+        return super.quickMoveStack(
                 player,
-                clickedStack
+                clickedSlotIndex
         );
-
-        return originalStack;
     }
 
     private final class PagedIngredientHandler
