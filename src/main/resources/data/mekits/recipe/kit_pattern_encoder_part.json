@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "ae2:pattern_encoding_terminal"
+    },
+    {
+      "item": "ae2:engineering_processor"
+    },
+    {
+      "item": "mekits:blank_me_kit_pattern"
+    }
+  ],
+  "result": {
+    "id": "mekits:kit_pattern_encoder_part",
+    "count": 1
+  }
+}

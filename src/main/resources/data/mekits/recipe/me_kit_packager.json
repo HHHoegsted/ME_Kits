@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IEI",
+    "FMA",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "E": {
+      "item": "ae2:engineering_processor"
+    },
+    "F": {
+      "item": "ae2:formation_core"
+    },
+    "M": {
+      "item": "ae2:interface"
+    },
+    "A": {
+      "item": "ae2:annihilation_core"
+    },
+    "P": {
+      "item": "mekits:blank_me_kit_pattern"
+    }
+  },
+  "result": {
+    "id": "mekits:me_kit_packager",
+    "count": 1
+  }
+}

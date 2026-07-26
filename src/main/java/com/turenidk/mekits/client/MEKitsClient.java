@@ -17,6 +17,10 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import org.jetbrains.annotations.NotNull;
+import com.turenidk.mekits.client.render.MEKitItemRenderer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 @Mod(
         value = MEKits.MODID,
@@ -44,6 +48,10 @@ public final class MEKitsClient {
 
         modEventBus.addListener(
                 MEKitsClient::registerItemColours
+        );
+
+        modEventBus.addListener(
+                MEKitsClient::registerClientExtensions
         );
     }
 
@@ -104,6 +112,25 @@ public final class MEKitsClient {
                     return 0xFF000000 | colour;
                 },
                 MEKits.KIT_PATTERN_ENCODER_PART.get()
+        );
+    }
+
+    private static void registerClientExtensions(
+            @NotNull RegisterClientExtensionsEvent event
+    ) {
+        event.registerItem(
+                new IClientItemExtensions() {
+
+                    private final MEKitItemRenderer renderer =
+                            new MEKitItemRenderer();
+
+                    @Override
+                    public @NotNull BlockEntityWithoutLevelRenderer
+                    getCustomRenderer() {
+                        return renderer;
+                    }
+                },
+                MEKits.ME_KIT.get()
         );
     }
 }
